@@ -19,7 +19,7 @@
     
     getIndex(req, res) {
       res.render('index', Object.assign({ 
-
+        locale: req.i18n.getLocale()
       }, req.paatosUiCommon));
     }
     

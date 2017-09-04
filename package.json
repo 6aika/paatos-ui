@@ -17,6 +17,7 @@
     "connect-session-sequelize": "^4.1.0",
     "express": "4.15.4",
     "express-session": "^1.15.3",
+    "i18n-x": "^0.1.5",
     "keycloak-admin-client": "^0.10.0",
     "keycloak-connect": "3.3.0-cr.1",
     "lodash": "^4.17.4",

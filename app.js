@@ -11,6 +11,7 @@
   const express = require('express');
   const request = require('request');
   const config = require('nconf');
+  const i18n = require('i18n-x');
   const Keycloak = require('keycloak-connect');  
   const session = require('express-session');
   const SequelizeStore = require('connect-session-sequelize')(session.Store);
@@ -68,6 +69,10 @@
       resave: false,
       saveUninitialized: true,
       secret: config.get('session-secret')
+    }));
+    
+    app.use(i18n({
+      locales: ['fi', 'en']
     }));
     
     app.use(keycloak.middleware({

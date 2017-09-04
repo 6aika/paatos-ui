@@ -10,7 +10,9 @@ mixin menu(active)
               | Etusivu
           if isLoggedIn
             li.nav-item
-              a.nav-link(href='/logout') Kirjaudu ulos
+              a.nav-link(href='/logout')
+                = __('menu.logout')
           else
             li.nav-item
-              a.nav-link(href='/login') Kirjaudu sisään
+              a.nav-link(href='/login')
+                = __('menu.login')
