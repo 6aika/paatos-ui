@@ -1,0 +1,15 @@
+{
+  "name": "paatos-ui-models",
+  "version": "0.0.1",
+  "description": "Database models for 6aika paatos UI",
+  "main": "index.js",
+  "plugin": {
+    "provides": [
+      "paatos-ui-models"
+    ],
+    "consumes": [
+      "shady-sequelize",
+      "logger"
+    ]
+  }
+}

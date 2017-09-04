@@ -1,0 +1,15 @@
+{
+  "name": "paatos-ui-routes",
+  "version": "0.0.1",
+  "description": "Connect routes for 6aika paatos UI",
+  "main": "index.js",
+  "plugin": {
+    "provides": [
+      "paatos-ui-routes"
+    ],
+    "consumes": [
+      "logger",
+      "paatos-ui-models"
+    ]
+  }
+}
