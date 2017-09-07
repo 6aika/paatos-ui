@@ -36,15 +36,19 @@
     
     const sequelize = architectApp.getService('shady-sequelize').sequelize;
     const Sequelize = architectApp.getService('shady-sequelize').Sequelize;
+    const shadyWorker = architectApp.getService('shady-worker');
     const models = architectApp.getService('paatos-ui-models');
     const routes = architectApp.getService('paatos-ui-routes');
     const logger = architectApp.getService('logger');
     
     const port = options.getOption('port');
     const host = options.getOption('host');
+    const serverGroup = config.get("server-group");
+
+    const workerId = shadyWorker.start(serverGroup, port, host);
     const app = express();
     const httpServer = http.createServer(app);
-    
+
     const sessionStore = new SequelizeStore({
       db: sequelize,
       table: "ConnectSession"

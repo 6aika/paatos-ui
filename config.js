@@ -2,6 +2,10 @@ const config = require('nconf');
 
 module.exports = [
   {
+    "packagePath": "shady-messages",
+    "amqpUrl": config.get('amqp:url')
+  },
+  {
     "packagePath": "shady-sequelize",
     "host": config.get('mysql:host'),
     "database": config.get('mysql:database'),
@@ -19,6 +23,7 @@ module.exports = [
       }
     }
   },
+   "shady-worker",
   "./plugins/models",
   "./plugins/routes"
 ];
