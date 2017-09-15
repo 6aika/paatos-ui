@@ -1,0 +1,60 @@
+.btn {
+  border-radius: 0;
+}
+
+.input-group {
+  input {
+    border-radius: 0;
+    border: none;
+  }
+  
+  .input-group-addon {
+    border-radius: 0;
+    border: none;
+  }
+}
+.list-group {
+  .list-group-item {
+    border: none;
+    border-radius: 0;
+  }
+}
+
+.login-buttons {
+
+  .btn-primary:focus {
+    box-shadow: none;
+  }
+
+  .login-btn {
+    background: #00a5f0;
+    border: none;
+  }
+
+  .facebook-btn {
+    background: #3963c7;
+    border: none;
+  }
+
+  .google-btn {
+    background: #d1422b;
+    border: none;
+  }
+  
+  .btn-block {
+    margin-top: 3px;
+    text-align: left;
+    
+    .fa {
+      padding-right: 15px;
+    }
+  }
+}
+
+footer {
+  margin-top: 15px;
+  background: #00b59d;
+  padding-top: 20px;
+  padding-bottom: 20px;
+  color: #fff;
+}

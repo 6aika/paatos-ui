@@ -1,4 +1,4 @@
-include ../mixins/menu
+include ../mixins/login-buttons
 
 doctype html
 html(lang='en')
@@ -17,6 +17,19 @@ html(lang='en')
     link(rel='stylesheet', href='/css/layout.min.css')
     block custom-head
   body
-    .container-fluid.no-gutters
-      +menu()
     block body
+  footer.footer
+    .container
+      .row
+        .col
+          .row
+            .col
+              +login-buttons()
+            .col
+              p Info - 1
+            .col
+              p Info - 2
+            .col
+              p Info - 3
+        .col-5
+          h3 EU here

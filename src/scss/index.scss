@@ -1,0 +1,77 @@
+.jumbotron {
+
+  .site-title {
+    text-transform: uppercase;
+  }
+  .site-subtitle {
+    text-transform: uppercase;
+  }
+  
+}
+
+.container-title {
+  p {
+    margin-bottom: -10px;
+    margin-top: 20px;
+    font-weight: bold;
+  }
+}
+
+.free-text-search-container {
+  .main-search-group {
+    
+    .form-control {
+      background: #e1e1e1;
+      color: #000;
+    }
+    
+    .fa-search {
+      background: #c34679;
+      color: #fff;
+    }
+
+    .fa-rss {
+      background: #ff6600;
+      color: #fff;
+    }
+  }
+}
+
+.filter-container {
+  
+  .filter-box {
+    padding: 15px;
+    margin: 15px;
+    min-height: 200px;
+    background: #426cb7;
+  }
+}
+
+.search-tree-container {
+  .search-tree-box {
+    padding: 15px;
+    margin: 15px;
+    min-height: 600px;
+    background: #7dba00;
+  }
+}
+
+.search-results-container {
+  
+  .search-results-box {
+    margin-top: 15px; 
+  }
+  
+  .search-result-item {
+    background: #7dba00;
+    border-bottom: 3px solid #fff;
+    padding-left: 10px;
+  }
+  
+  .search-result-icon {
+    font-size: 28px;
+    color: #fff;
+    padding-right: 20px;
+  }
+  
+}
