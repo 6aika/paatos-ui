@@ -1,0 +1,14 @@
+{
+  "name": "paatos-ui-apiclient",
+  "version": "0.0.1",
+  "description": "API client for 6aika paatos UI",
+  "main": "index.js",
+  "plugin": {
+    "provides": [
+      "paatos-ui-apiclient"
+    ],
+    "consumes": [
+      "logger"
+    ]
+  }
+}
