@@ -14,6 +14,7 @@
   const i18n = require('i18n-x');
   const Keycloak = require('keycloak-connect');  
   const session = require('express-session');
+  const bodyParser = require('body-parser');
   const SequelizeStore = require('connect-session-sequelize')(session.Store);
   
   config.file({file: __dirname + '/config.json'});
@@ -73,6 +74,11 @@
       resave: false,
       saveUninitialized: true,
       secret: config.get('session-secret')
+    }));
+    
+    app.use(bodyParser.json());
+    app.use(bodyParser.urlencoded({
+      extended : true
     }));
     
     app.use(i18n({
