@@ -1,0 +1,14 @@
+{
+  "name": "paatos-ui-search",
+  "version": "0.0.1",
+  "description": "Search for 6aika paatos UI",
+  "main": "index.js",
+  "plugin": {
+    "provides": [
+      "paatos-ui-search"
+    ],
+    "consumes": [
+      "logger"
+    ]
+  }
+}
