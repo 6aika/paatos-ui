@@ -4,6 +4,9 @@ block custom-head
   title 
     = __('index.title')
   link(rel='stylesheet', href='/css/index.min.css')
+  script(defer='defer',src='/js/pug-templates.min.js',type='text/javascript')
+  script(defer='defer',src='/js/index.min.js',type='text/javascript')
+  script(defer='defer',src='//cdnjs.cloudflare.com/ajax/libs/Shuffle/5.0.1/shuffle.min.js',type='text/javascript')
 block body
   .jumbotron
     .container
@@ -21,12 +24,12 @@ block body
       .free-text-search-container
         .input-group.input-group-lg.main-search-group
           span.input-group-addon.fa.fa-search
-          input.form-control(type='text', placeholder='Hae päätöksiä, Vapaa sanahaku, osoite, kaupunki, tehtäväluokka, toimiala, teema, aihe-alue')
+          input.freetext-search.form-control(type='text', placeholder='Hae päätöksiä, Vapaa sanahaku, osoite, kaupunki, tehtäväluokka, toimiala, teema, aihe-alue')
           span.input-group-addon.fa.fa-rss
       .filter-container
         .container-title 
           p Rajaa hakutulosta
-        .row
+        .row(style="display:none")
           .col.filter-box filter-1
           .col.filter-box filter-2
           .col.filter-box filter-3
@@ -34,7 +37,7 @@ block body
       .search-tree-container
         .container-title 
           p Hakupuu
-        .row
+        .row(style="display:none")
           .col.search-tree-box Tree-1
           .col.search-tree-box Tree-2
           .col.search-tree-box Tree-3
@@ -43,19 +46,5 @@ block body
           p Haun tulokset
         .row
           .col.search-results-box
+            .suffle-sizer
             ul.list-group
-              li.list-group-item.search-result-item
-                i.fa.fa-folder-o.search-result-icon
-                | Cras justo odio
-              li.list-group-item.search-result-item 
-                i.fa.fa-folder-o.search-result-icon
-                | Dapibus ac facilisis in
-              li.list-group-item.search-result-item
-                i.fa.fa-folder-o.search-result-icon
-                | Morbi leo risus
-              li.list-group-item.search-result-item 
-                i.i.fa.fa-folder-o.search-result-icon
-                | Porta ac consectetur ac
-              li.list-group-item.search-result-item
-                i.fa.fa-folder-o.search-result-icon
-                | Vestibulum at eros

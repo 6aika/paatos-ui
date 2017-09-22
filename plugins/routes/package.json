@@ -9,7 +9,8 @@
     ],
     "consumes": [
       "logger",
-      "paatos-ui-models"
+      "paatos-ui-models",
+      "paatos-ui-search"
     ]
   }
 }
