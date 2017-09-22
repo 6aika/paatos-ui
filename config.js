@@ -25,5 +25,8 @@ module.exports = [
   },
    "shady-worker",
   "./plugins/models",
-  "./plugins/routes"
+  "./plugins/routes",
+  "./plugins/tasks",
+  "./plugins/apiclient",
+  "./plugins/search"
 ];

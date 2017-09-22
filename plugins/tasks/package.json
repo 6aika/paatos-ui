@@ -1,0 +1,16 @@
+{
+  "name": "paatos-ui-tasks",
+  "version": "0.0.1",
+  "description": "Background tasks for 6aika paatos UI",
+  "main": "index.js",
+  "plugin": {
+    "provides": [
+      "paatos-ui-tasks"
+    ],
+    "consumes": [
+      "logger",
+      "paatos-ui-apiclient",
+      "paatos-ui-search"
+    ]
+  }
+}
