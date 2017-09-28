@@ -10,7 +10,8 @@
     "consumes": [
       "logger",
       "paatos-ui-models",
-      "paatos-ui-search"
+      "paatos-ui-search",
+      "paatos-ui-apiclient"
     ]
   }
 }

@@ -15,6 +15,31 @@
       this.logger = logger;
     }
     
+    findAction(apiId, actionId) {
+      return this.getActionsApi(apiId)
+        .actionsRetrieve(actionId);
+    }
+    
+    findCase(apiId, caseId) {
+      return this.getCasesApi(apiId)
+        .casesRetrieve(caseId);
+    }
+    
+    findFunction(apiId, functionId) {
+      return this.getFunctionsApi(apiId)
+        .functionsRetrieve(functionId);
+    }
+    
+    findEvent(apiId, eventId) {
+      return this.getEventsApi(apiId)
+        .eventsRetrieve(eventId);
+    }
+    
+    findOrganization(apiId, organizationId) {
+      return this.getOrganizationsApi(apiId)
+        .organizationsRetrieve(organizationId);
+    }
+    
     listActions(apiId, options) {
       return this.getActionsApi(apiId)
         .actionsList(options);
@@ -33,6 +58,26 @@
     getActionsApi(apiId) {
       const apiClient = this.getClient(apiId);
       return new PaatosClient.ActionsApi(apiClient);
+    }
+    
+    getCasesApi(apiId) {
+      const apiClient = this.getClient(apiId);
+      return new PaatosClient.CasesApi(apiClient);
+    }
+    
+    getEventsApi(apiId) {
+      const apiClient = this.getClient(apiId);
+      return new PaatosClient.EventsApi(apiClient);
+    }
+    
+    getFunctionsApi(apiId) {
+      const apiClient = this.getClient(apiId);
+      return new PaatosClient.FunctionsApi(apiClient);
+    }
+    
+    getOrganizationsApi(apiId) {
+      const apiClient = this.getClient(apiId);
+      return new PaatosClient.OrganizationsApi(apiClient);
     }
     
     getClient(apiId) {

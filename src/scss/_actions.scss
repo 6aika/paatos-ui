@@ -1,0 +1,16 @@
+@import "colors";
+
+$action-darken-amount: 20%;
+
+@mixin search-result-item-action($actionName, $color) {
+  .search-result-item.#{$actionName}-action {
+    background: $color;
+
+    &.search-result-item-open .search-result-item-title {
+      color: darken($color, $action-darken-amount);
+    }
+  }
+}
+
+@include search-result-item-action('environment', $environment-color);
+@include search-result-item-action('city', $city-color);

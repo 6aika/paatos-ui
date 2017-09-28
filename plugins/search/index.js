@@ -9,6 +9,7 @@
   const config = require('nconf');
   const elasticsearch = require('elasticsearch');
   const EventEmitter = require('events');
+  const ApiUtils = require(__dirname + '/../../utils/apiutils.js');
 
   class Search extends EventEmitter {
     
@@ -35,27 +36,74 @@
         });
     }
     
-    indexActions(apiId, actions) {
-      const requests = _.map(actions, (action) => {
-        return this.indexAction(apiId, action);
+    indexActions(apiId, actionsData) {
+      const indexPromises = _.map(actionsData.actions, (actionResource) => {
+        const caseId = ApiUtils.extractIdFromUrl(actionResource.case);
+        const eventId = ApiUtils.extractIdFromUrl(actionResource.event);
+        
+        const caseResource = caseId ? actionsData.cases[caseId] : null;
+        const eventResource = eventId ? actionsData.events[eventId] : null;
+        
+        const organizationId = eventResource ? ApiUtils.extractIdFromUrl(eventResource.organization) : null;
+        const organizationResource = organizationId ? actionsData.organizations[organizationId] : null;
+        
+        const functionId = caseResource ? ApiUtils.extractIdFromUrl(caseResource.function) : null;
+        const functionResource = functionId ? actionsData.functions[functionId] : null;
+        
+        return this.indexAction(apiId, actionResource, caseResource, eventResource, organizationResource, functionResource);
       });
       
-      return Promise.all(requests);
+      return Promise.all(indexPromises);
     }
     
-    indexAction(apiId, action) {
-      return this.client.index({
-        index: this.index,
-        type: 'action',
-        id: `${apiId}-${action['id']}`,
-        body: {
-          actionId: action['id'],
-          apiId: apiId,
-          resultText: action.title,
-          title: action.title,
-          contentTexts: _.map(action.contents, 'hypertext')
-        }
-      });
+    indexAction(apiId, actionResource, caseResource, eventResource, organizationResource, functionResource) {
+      const body = {
+        actionId: actionResource['id'],
+        apiId: apiId,
+        resultText: actionResource.title,
+        title: actionResource.title,
+        contentTexts: _.map(actionResource.contents, 'hypertext'),
+      };
+      
+      if (eventResource) {
+        body.eventId = eventResource['id'];
+        body.eventStart = eventResource['start_date'];
+        body.eventEnd = eventResource['end_date'];
+      }
+      
+      if (organizationResource) {
+        body.organizationName = organizationResource.name;
+      }
+      
+      if (caseResource) {
+        body.caseTitle = caseResource.title;
+        body.caseRegisterId = caseResource['register_id'];
+        body.caseGeometries = {
+          "type": "geometrycollection",
+          "geometries": _.map(caseResource.geometries||[], (geometry) => {
+            return {
+              type: geometry.geometry.type,
+              coordinates: geometry.geometry.coordinates
+            };
+          })
+        };
+      }
+      
+      if (functionResource) {
+        body.functionId = functionResource['function_id'];
+        body.functionName = functionResource.name;
+      }
+      
+      return this.client
+        .index({
+          index: this.index,
+          type: 'action',
+          id: `${apiId}-${actionResource['id']}`,
+          body: body
+        })
+        .catch((e) => {
+          console.log(`Failed to index ${apiId} / ${actionResource['id']}`, e);
+        });
     }
     
     search(options) {
@@ -80,8 +128,22 @@
         "apiId": this.getTypeMapping("string", "not_analyzed", true),
         "resultText": this.getTypeMapping("string", "not_analyzed", true),
         "title": this.getTypeMapping("string", "analyzed", false),
-        "contentTexts": this.getTypeMapping("string", "analyzed", false)
+        "contentTexts": this.getTypeMapping("string", "analyzed", false),
+        "functionId": this.getTypeMapping("string", "not_analyzed", true),
+        "eventId": this.getTypeMapping("string", "not_analyzed", true),
+        "caseRegisterId": this.getTypeMapping("string", "not_analyzed", true),
+        "functionName": this.getTypeMapping("string", "analyzed", true),
+        "caseTitle": this.getTypeMapping("string", "analyzed", true),
+        "organizationName": this.getTypeMapping("string", "analyzed", true),
+        "eventStart": this.getTypeMapping("date", null, true),
+        "eventEnd": this.getTypeMapping("date", null, true),
+        "caseGeometries": {
+          "type": "geo_shape",
+          "tree": "quadtree",
+          "precision": "1m"
+        }
       });
+          
     }
     
     updateMapping(type, properties) {
@@ -95,13 +157,17 @@
     }
     
     getTypeMapping(type, index, store) {
-      return {
+      const result = {
         "store": store,
-        "index": index,
         "type": type
       };
+      
+      if (index) {
+        result.index = index;
+      }
+      
+      return result;
     }
-    
   }
   
   module.exports = (options, imports, register) => {

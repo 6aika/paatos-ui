@@ -12,14 +12,21 @@
   
   class Routes {
     
-    constructor (logger, models, search) {
+    constructor (logger, models, search, apiClient) {
       this.logger = logger;
       this.models = models;
       this.search = search;
+      this.apiClient = apiClient;
     }
     
     getIndex(req, res) {
       res.render('index', Object.assign({
+        apis: _.map(config.get(`apis`), (config, id) => {
+          return {
+            id: id,
+            name: config.name
+          };
+        }),
         locale: req.i18n.getLocale()
       }, req.paatosUiCommon));
     }
@@ -36,10 +43,47 @@
       const freeText = req.body.freeText;
       const from = parseInt(req.body.from);
       const size = parseInt(req.body.size);
+      const apiIds = req.body.apiIds;
       
-      this.search.search({ q: freeText, from: from, size: size })
+      const queryBody = {
+        query: {
+          "bool": {
+            "must": [
+              {
+                "terms" : {
+                  "apiId" : apiIds 
+                }
+              },
+              {
+                "match" : {
+                  "contentTexts" : freeText
+                }
+              }
+            ]
+          }
+        }
+      };
+      
+      this.search.search({ body: queryBody, from: from, size: size })
         .then((result) => {
           res.send(result.hits);
+        });
+    }
+    
+    getAjaxAction(req, res) {
+      const apiId = req.params.apiId;
+      const actionId = req.params.actionId;
+      
+      this.apiClient.findAction(apiId, actionId)
+        .then((action) => {
+          if (action) {
+            res.send(action);
+          } else {
+            res.status(404).send();
+          }
+        })
+        .catch((err) => {
+          res.status(500).send(err);
         });
     }
     
@@ -50,6 +94,7 @@
       app.get("/version", this.getVersion.bind(this));
       app.get("/system/ping", this.getSystemPing.bind(this));
       app.post('/ajax/search', this.postAjaxSearch.bind(this));
+      app.get('/ajax/action/:apiId/:actionId', this.getAjaxAction.bind(this));
     }
     
   };
@@ -58,8 +103,9 @@
     const logger = imports['logger'];
     const models = imports['paatos-ui-models'];
     const search = imports['paatos-ui-search'];
+    const apiClient = imports['paatos-ui-apiclient'];
     
-    const routes = new Routes(logger, models, search);
+    const routes = new Routes(logger, models, search, apiClient);
     register(null, {
       'paatos-ui-routes': routes
     });

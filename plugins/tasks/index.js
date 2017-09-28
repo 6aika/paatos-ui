@@ -8,6 +8,7 @@
   const Promise = require('bluebird');
   const Queue = require('better-queue');
   const config = require('nconf');
+  const ApiUtils = require(__dirname + '/../../utils/apiutils.js');
   
   class Tasks {
     
@@ -21,7 +22,7 @@
   
       this.search.on('indexReady', this.onSearchReady.bind(this));
       
-      this.actionQueue = new Queue(this.indexCase.bind(this), { 
+      this.actionQueue = new Queue(this.indexAction.bind(this), { 
         autoResume: false,
         concurrent: config.get('tasks:concurrent'), 
         afterProcessDelay: config.get('tasks:afterProcessDelay'), 
@@ -42,19 +43,96 @@
       this.actionQueue.resume();
     }
     
-    indexCase(data, callback) {
+    indexAction(data, callback) {
+      this.loadActionDatas(data.apiId, data.page * this.pageSize, this.pageSize)
+        .then((result) => {
+          return this.search.indexActions(data.apiId, result);
+        })
+        .then(() => {
+          callback();
+        });
+    }
+    
+    loadActionDatas(apiId, offset, limit) {
       const options = {
-        offset: data.page * this.pageSize,
-        limit: this.pageSize
+        offset: offset,
+        limit: limit
       };
       
-      this.apiClient.listActions(data.apiId, options)
+      return this.apiClient.listActions(apiId, options)
         .then((result) => {
-          this.search.indexActions(data.apiId, result.results)
-            .then(() => {
-              callback();
+          const actions = result.results;
+          const caseIds = ApiUtils.extractUrlResourceIds(actions, 'case');
+          const eventIds = ApiUtils.extractUrlResourceIds(actions, 'event');
+          
+          return Promise.all([this.findCases(apiId, caseIds), this.findEvents(apiId, eventIds)])
+            .then((caseEventData) => {
+              const cases = this.preprocessCases(caseEventData[0]);
+              const events = caseEventData[1];
+              
+              const functionIds = ApiUtils.extractUrlResourceIds(cases, 'function');
+              const organizationIds = ApiUtils.extractUrlResourceIds(events, 'organization');
+              
+              return Promise.all([this.findFunctions(apiId, functionIds), this.findOrganizations(apiId, organizationIds)])
+                .then((functionOrganizationData) => {
+                  return {
+                    actions: _.keyBy(actions, 'id'),
+                    cases: _.keyBy(cases, 'id'),
+                    events: _.keyBy(events, 'id'),
+                    functions: _.keyBy(functionOrganizationData[0], 'id'),
+                    organizations: _.keyBy(functionOrganizationData[1], 'id')
+                  };
+                });
             });
         });
+    }
+    
+    findCases(apiId, caseIds) {
+      const findPromises = _.map(caseIds, (caseId) => {
+        return this.apiClient.findCase(apiId, caseId);
+      });
+      
+      return Promise.all(findPromises);
+    }
+    
+    findEvents(apiId, eventIds) {
+      const findPromises = _.map(eventIds, (eventId) => {
+        return this.apiClient.findEvent(apiId, eventId);
+      });
+      
+      return Promise.all(findPromises);
+    }
+    
+    findFunctions(apiId, functionIds) {
+      const findPromises = _.map(functionIds, (functionId) => {
+        return this.apiClient.findFunction(apiId, functionId);
+      });
+      
+      return Promise.all(findPromises);
+    }
+    
+    findOrganizations(apiId, organizationIds) {
+      const findPromises = _.map(organizationIds, (organizationId) => {
+        return this.apiClient.findOrganization(apiId, organizationId);
+      });
+      
+      return Promise.all(findPromises);
+    }
+    
+    preprocessCases(caseResources) {
+      return _.map(caseResources, (caseResource) => {
+        return this.preprocessCase(caseResource);
+      });
+    }
+    
+    preprocessCase(caseResource) {
+      if (caseResource.geometries) {
+        caseResource.geometries.forEach((geometryItem) => { 
+          geometryItem.geometry = ApiUtils.removeGeoJsonDuplicates(geometryItem.geometry);
+        });
+      }
+      
+      return caseResource;
     }
     
     queueCaseIndexTasks() {
@@ -71,7 +149,7 @@
           for (let i = 0; i < counts.length; i++) {
             const count = counts[i];
             const apiId = apiIds[i];
-            const pageCount = Math.ceil(count / this.pageSize); 
+            const pageCount = Math.ceil(count / this.pageSize) - 1; 
             queuePromises.push(this.queueCaseIndexTasksPages(apiId, pageCount));
           }
           

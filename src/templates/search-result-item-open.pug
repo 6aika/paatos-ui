@@ -1,0 +1,14 @@
+.row
+  .col
+    h4
+      =title
+.row
+  .col-8
+    for content in contents
+      if content.title
+        h5
+          =content.title
+      .search-result-content
+        !=content.hypertext
+  .col-4
+    .map

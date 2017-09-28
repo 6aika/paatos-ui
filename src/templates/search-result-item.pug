@@ -1,3 +1,11 @@
-li.list-group-item.search-result-item(data-source=hit.source,data-score=score,data-id=id)
-  i.fa.fa-folder-o.search-result-icon
-  != hit.resultText
+li.list-group-item.search-result-item(data-source=hit.source,data-score=score,data-id=id,data-action-id=hit.actionId,data-api-id=hit.apiId,class=functionClass,data-case-geometries=caseGeometries)
+  .row
+    .col-1.search-result-icon-container
+      i.fa.fa-folder-o.search-result-icon
+      i.fa.fa-folder-open-o.search-result-icon
+    .col.search-result-content-container
+      .search-result-item-title
+        =title
+      .search-result-api
+        =hit.apiId
+      .search-result-details
