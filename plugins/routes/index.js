@@ -44,6 +44,7 @@
       const from = parseInt(req.body.from);
       const size = parseInt(req.body.size);
       const apiIds = req.body.apiIds;
+      const geoJson = req.body.geoJson;
       
       const queryBody = {
         query: {
@@ -53,16 +54,30 @@
                 "terms" : {
                   "apiId" : apiIds 
                 }
-              },
-              {
-                "match" : {
-                  "contentTexts" : freeText
-                }
               }
             ]
           }
         }
       };
+      
+      if (freeText) {
+        queryBody.query.must.push({
+          "match" : {
+            "contentTexts" : freeText
+          }
+        });
+      }
+      
+      if (geoJson) {
+        queryBody.query.bool.filter = {
+          "geo_shape": {
+            "caseGeometries": {
+              "shape": JSON.parse(geoJson),
+              "relation": "within"
+            }
+          }
+        };
+      }
       
       this.search.search({ body: queryBody, from: from, size: size })
         .then((result) => {

@@ -11,18 +11,25 @@
         tiles: {
           urlTemplate: 'https://stamen-tiles.a.ssl.fastly.net/terrain/{z}/{x}/{y}.png',
           options: {
-            attribution: [
+            attribution: "" /*[
               'Map tiles by <a href="http://stamen.com/">Stamen Design</a>, ',
               'under <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>. ',
               'Data by <a href="http://openstreetmap.org/">OpenStreetMap</a>, ',
               'under <a href="http://creativecommons.org/licenses/by-sa/3.0">CC BY SA</a>.'
-            ].join("")
+            ].join("")*/
           }
+        },
+        searchOptions: {
+          center: new L.LatLng(60.192059, 24.945831),
+          zoom: 12,
+          maxZoom: 18
         }
       }
     },
     
     _create : function() {
+      this._geoJsonQuery = null;
+      
       this.shuffle = new Shuffle($('.search-results-box .list-group')[0], {
         itemSelector: '.search-result-item',
         sizer: $('.suffle-sizer')[0],
@@ -33,9 +40,50 @@
       this.element.on("keyup", '.freetext-search', $.proxy(this._onFreeTextSearchKeyUp, this));
       this.element.on("change", '.filter input[type="checkbox"]', $.proxy(this._onToggleFilterChange, this));
       this.element.on("click", '.search-result-item', $.proxy(this._onSearchResultItemClick, this));
+      this._createLocationFilterMap(this.element.find('.location-filter'));
+      
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition($.proxy(this._onCurrentGeoLocationPosition, this));
+      }
       
       this._updateToggleFilters();
       this._doSearch();
+    },
+    
+    _createLocationFilterMap(mapElement) {
+      this._searchMap = new L.Map(mapElement[0], this.options.leaflet.searchOptions);
+      L.tileLayer(this.options.leaflet.tiles.urlTemplate, this.options.leaflet.tiles.options).addTo(this._searchMap);
+      this._searchMapEditableLayers = new L.FeatureGroup();
+      this._searchMap.addLayer(this._searchMapEditableLayers);
+      
+      const drawControl = new L.Control.Draw({
+        position: 'topright',
+        draw: {
+          polygon: {
+            allowIntersection: false, 
+            shapeOptions: {
+              clickable: false
+            }
+          },
+          polyline : false,
+          rectangle: {
+            shapeOptions: {
+              clickable: false
+            }
+          },
+          circle : false,
+          marker: false,
+          circlemarker: false
+        },
+        edit: {
+          featureGroup: this._searchMapEditableLayers,
+          remove: false
+        }
+      });
+        
+      this._searchMap.addControl(drawControl);
+      this._searchMap.on(L.Draw.Event.CREATED, $.proxy(this._onSearchMapDrawEventCreated, this));
+      this._searchMap.on(L.Draw.Event.EDITED, $.proxy(this._onSearchMapDrawEventEdited, this));
     },
     
     _updateToggleFilters: function () {
@@ -68,6 +116,7 @@
       const options = {
         apiIds: apiIds,
         freeText: freeText, 
+        geoJson: this._geoJsonQuery ? JSON.stringify(this._geoJsonQuery.geometry) : null,
         from: 0, 
         size: this.options.searchResultsPerPage
       };
@@ -129,6 +178,25 @@
       return _.map(geometries, (geometry) => {
         return this._wrapGeoJSONFeature(geometry);
       });
+    },
+    
+    _onSearchMapDrawEventCreated: function (event) {
+      this._searchMapEditableLayers.clearLayers();
+      const layer = event.layer;
+      this._searchMapEditableLayers.addLayer(layer);
+      this._geoJsonQuery = layer.toGeoJSON();
+      this._doSearch();
+    },
+    
+    _onSearchMapDrawEventEdited: function (event) {
+      const layers = this._searchMapEditableLayers.getLayers();
+      const layer = layers[0];
+      this._geoJsonQuery = layer.toGeoJSON();
+      this._doSearch();
+    },
+    
+    _onCurrentGeoLocationPosition: function (position) {
+      this._searchMap.panTo(new L.LatLng( position.coords.latitude, position.coords.longitude));
     },
     
     _onToggleFilterChange: function () {
