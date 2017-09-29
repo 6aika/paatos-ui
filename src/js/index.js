@@ -29,6 +29,7 @@
     
     _create : function() {
       this._geoJsonQuery = null;
+      this._enabledApis = _.keyBy(JSON.parse($('input[name="enabled-apis"]').val()), "id");
       
       this.shuffle = new Shuffle($('.search-results-box .list-group')[0], {
         itemSelector: '.search-result-item',
@@ -39,7 +40,8 @@
       
       this.element.on("keyup", '.freetext-search', $.proxy(this._onFreeTextSearchKeyUp, this));
       this.element.on("change", '.filter input[type="checkbox"]', $.proxy(this._onToggleFilterChange, this));
-      this.element.on("click", '.search-result-item', $.proxy(this._onSearchResultItemClick, this));
+      this.element.on("click", '.search-result-item-title-container', $.proxy(this._onSearchResultItemTitleContainerClick, this));
+      this.element.on("click", '.search-result-icon-container', $.proxy(this._onSearchResultItemIconContainerClick, this));
       this.element.on("click", '.search-tree-item', $.proxy(this._onSearchTreeItemClick, this));
       this.element.on("click", '.search-container-title', $.proxy(this._onSearchContainerTitleClick, this));
       
@@ -52,6 +54,10 @@
       this._loadSearchTreeLevel(0);
       this._updateToggleFilters();
       this._doSearch();
+    },
+    
+    _getApiName: function (apiId) {
+      return (this._enabledApis[apiId]||{}).name || 'Tuntematon';
     },
     
     _loadSearchTreeLevel: function (level, parentId) {
@@ -179,10 +185,11 @@
           const rootFunctionId = source.functionId ? source.functionId.split(' ')[0] : '99';
           
           const resultHtml = pugSearchResultItem({
-            title: source.resultText,
+            title: _.truncate(source.resultText, { length: 100 }),
             hit: source,
             score: hit._score,
             id: hit._id,
+            sourceApi: this._getApiName(source.apiId),
             rootFunctionId: rootFunctionId,
             caseGeometries: source.caseGeometries && source.caseGeometries.geometries ? source.caseGeometries.geometries : null
           });
@@ -225,6 +232,50 @@
       return _.map(geometries, (geometry) => {
         return this._wrapGeoJSONFeature(geometry);
       });
+    },
+    
+    _toggleSearchResultItemOpen: function (item) {
+      item.toggleClass('search-result-item-open');
+      const apiId = $(item).attr('data-api-id');
+      const actionId = $(item).attr('data-action-id');
+      this.shuffle.layout();
+      
+      if (item.hasClass('search-result-item-open')) {
+        item.addClass('search-result-item-loading');
+        
+        const caseGeometriesStr = item.attr('data-case-geometries');
+        const caseGeometries = caseGeometriesStr ? JSON.parse(caseGeometriesStr) : null;
+        
+        $.getJSON(`/ajax/action/${apiId}/${actionId}`, (response) => {
+          const html = pugSearchResultItemOpen({
+            functionId: item.attr('data-function-id'),
+            title: response.title,
+            contents: response.contents.sort((a, b) => {
+              return a.ordering - b.ordering;
+            })
+          });
+          
+          item.find('.search-result-details').html(html);
+          
+          if (caseGeometries && caseGeometries.length) {
+            const mapElement = item.find('.map');
+            const map = new L.Map(mapElement[0]);
+            L.tileLayer(this.options.leaflet.tiles.urlTemplate, this.options.leaflet.tiles.options).addTo(map);
+            const layer = L.geoJSON(caseGeometries);
+            layer.addTo(map);
+            map.fitBounds(layer.getBounds().pad(0.1), { maxZoom: 10 });
+            mapElement.data('map', map);
+          }
+        
+          item.removeClass('search-result-item-loading');
+          this.shuffle.layout();
+        });
+      } else {
+        const map = item.find('.map').data('map');
+        if (map) {
+          map.remove();
+        }
+      }
     },
     
     _onSearchMapDrawEventCreated: function (event) {
@@ -282,54 +333,12 @@
       $(event.target).closest('.search-container').toggleClass('search-container-closed');
     },
     
-    _onSearchResultItemClick: function (event) {
-      if ($(event.target).closest('.map').length) {
-        return;
-      }
-      
-      const item = $(event.target).closest('.search-result-item');
-      item.toggleClass('search-result-item-open');
-      
-      const apiId = $(item).attr('data-api-id');
-      const actionId = $(item).attr('data-action-id');
-      this.shuffle.layout();
-      
-      if (item.hasClass('search-result-item-open')) {
-        item.addClass('search-result-item-loading');
-        
-        const caseGeometriesStr = item.attr('data-case-geometries');
-        const caseGeometries = caseGeometriesStr ? JSON.parse(caseGeometriesStr) : null;
-        
-        $.getJSON(`/ajax/action/${apiId}/${actionId}`, (response) => {
-          const html = pugSearchResultItemOpen({
-            functionId: item.attr('data-function-id'),
-            title: response.title,
-            contents: response.contents.sort((a, b) => {
-              return a.ordering - b.ordering;
-            })
-          });
-          
-          item.find('.search-result-details').html(html);
-          
-          if (caseGeometries && caseGeometries.length) {
-            const mapElement = item.find('.map');
-            const map = new L.Map(mapElement[0]);
-            L.tileLayer(this.options.leaflet.tiles.urlTemplate, this.options.leaflet.tiles.options).addTo(map);
-            const layer = L.geoJSON(caseGeometries);
-            layer.addTo(map);
-            map.fitBounds(layer.getBounds().pad(0.1), { maxZoom: 10 });
-            mapElement.data('map', map);
-          }
-        
-          item.removeClass('search-result-item-loading');
-          this.shuffle.layout();
-        });
-      } else {
-        const map = item.find('.map').data('map');
-        if (map) {
-          map.remove();
-        }
-      }
+    _onSearchResultItemIconContainerClick: function () {
+      this._toggleSearchResultItemOpen($(event.target).closest('.search-result-item'));
+    },
+    
+    _onSearchResultItemTitleContainerClick: function (event) {
+      this._toggleSearchResultItemOpen($(event.target).closest('.search-result-item'));
     }
   
   });

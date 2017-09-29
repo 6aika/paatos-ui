@@ -4,8 +4,11 @@ li.list-group-item.search-result-item(data-source=hit.source,data-score=score,da
       i.fa.fa-folder-o.search-result-icon
       i.fa.fa-folder-open-o.search-result-icon
     .col.search-result-content-container
-      .search-result-item-title
-        =title
-      .search-result-api
-        =hit.apiId
+      .search-result-item-title-container
+        .search-result-item-title
+          =title
+        .search-result-item-source-api
+          =sourceApi
+        .search-result-item-organization-name
+          =hit.organizationName
       .search-result-details
