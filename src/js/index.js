@@ -248,7 +248,9 @@
         
         $.getJSON(`/ajax/action/${apiId}/${actionId}`, (response) => {
           const html = pugSearchResultItemOpen({
+            sourceApi: item.attr('data-source-api'),
             functionId: item.attr('data-function-id'),
+            registerId: item.attr('data-register-id'),
             title: response.title,
             contents: response.contents.sort((a, b) => {
               return a.ordering - b.ordering;

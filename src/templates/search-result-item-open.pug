@@ -14,5 +14,15 @@
     .map
 .row
   .col
-    .search-result-detail
-      =functionId
+    .search-result-detail-rows
+      .search-result-detail-row
+        if sourceApi
+          .search-result-detail
+            =sourceApi
+        if registerId
+          .search-result-detail
+            |DNO:
+            =registerId
+        if functionId
+          .search-result-detail
+            =functionId

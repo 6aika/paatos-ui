@@ -239,8 +239,34 @@ $open-search-content-background: #ebebeb;
 
      .search-result-details {
        height: auto;
+       padding-top: 10px;
+       padding-bottom: 20px;
       }
-
+      
+      .search-result-detail-rows {
+        padding-top: 20px;
+      }
+      
+      .search-result-detail-row {
+        color: $search-result-item-detail-color;
+        
+        .search-result-detail {
+          padding-right: 5px;
+          display: inline-block;
+          
+          &::before {
+            padding-right: 5px;
+            content: '/';
+          }
+            
+          &:first-child {
+            &::before {
+              padding-right: 0;
+              content: '';
+            }
+          }
+        }
+      }
     }
 
   }
