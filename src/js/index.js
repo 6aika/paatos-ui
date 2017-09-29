@@ -267,6 +267,8 @@
             layer.addTo(map);
             map.fitBounds(layer.getBounds().pad(0.1), { maxZoom: 10 });
             mapElement.data('map', map);
+          } else {
+            item.find('.map').hide();
           }
         
           item.removeClass('search-result-item-loading');
