@@ -62,7 +62,7 @@
         apiId: apiId,
         resultText: actionResource.title,
         title: actionResource.title,
-        contentTexts: _.map(actionResource.contents, 'hypertext'),
+        contentTexts: _.map(actionResource.contents, 'hypertext')
       };
       
       if (eventResource) {

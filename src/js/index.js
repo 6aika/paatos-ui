@@ -40,17 +40,57 @@
       this.element.on("keyup", '.freetext-search', $.proxy(this._onFreeTextSearchKeyUp, this));
       this.element.on("change", '.filter input[type="checkbox"]', $.proxy(this._onToggleFilterChange, this));
       this.element.on("click", '.search-result-item', $.proxy(this._onSearchResultItemClick, this));
+      this.element.on("click", '.search-tree-item', $.proxy(this._onSearchTreeItemClick, this));
+      
       this._createLocationFilterMap(this.element.find('.location-filter'));
       
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition($.proxy(this._onCurrentGeoLocationPosition, this));
       }
       
+      this._loadSearchTreeLevel(0);
       this._updateToggleFilters();
       this._doSearch();
     },
     
-    _createLocationFilterMap(mapElement) {
+    _loadSearchTreeLevel: function (level, parentId) {
+      const treeNodes = this._findSearchTreeNodes(parentId); 
+      const ids = Object.keys(treeNodes);
+      ids.sort();
+      
+      for (let l = level; l < 3; l++) {
+        $(`.search-tree-level-${l + 1}`).empty();
+      }
+      
+      _.forEach(ids, (id) => {
+        const treeNode = treeNodes[id];
+        const rootId = treeNode.id.split(' ')[0];
+
+        $(pugSearchTreeItem({
+          node: treeNode, 
+          rootId: rootId,
+          active: level > 0
+        })).appendTo($(`.search-tree-level-${level + 1}`));
+      });
+    },
+    
+    _findSearchTreeNodes: function (parentId) {
+      const functionIds = getPaatosFunctionIds();
+      if (!parentId) {
+        return functionIds;
+      }
+      
+      const parentTree = parentId.split(' ');
+      let result = functionIds[parentTree[0]];
+      
+      for (let i = 1; i < parentTree.length; i++) {
+        result = result.children[parentTree[i]];
+      }
+      
+      return result.children;
+    },
+    
+    _createLocationFilterMap: function(mapElement) {
       this._searchMap = new L.Map(mapElement[0], this.options.leaflet.searchOptions);
       L.tileLayer(this.options.leaflet.tiles.urlTemplate, this.options.leaflet.tiles.options).addTo(this._searchMap);
       this._searchMapEditableLayers = new L.FeatureGroup();
@@ -87,6 +127,10 @@
     },
     
     _updateToggleFilters: function () {
+      if ($('.filter input[type="checkbox"]:checked').length === 0) {
+        $('.filter input[type="checkbox"]').prop('checked', true);
+      }
+      
       $('.filter input[type="checkbox"]').each((index, element) => {
         const input = $(element);
         const filter = input.closest('.filter');
@@ -96,10 +140,6 @@
           filter.removeClass('filter-enabled');
         }
       });
-    },
-    
-    _getActionFunctionClass: function () {
-      return Math.random() > 0.5 ? 'environment-action' : 'city-action';
     },
     
     _doSearch: function () {
@@ -117,6 +157,7 @@
         apiIds: apiIds,
         freeText: freeText, 
         geoJson: this._geoJsonQuery ? JSON.stringify(this._geoJsonQuery.geometry) : null,
+        functionId: this._functionId,
         from: 0, 
         size: this.options.searchResultsPerPage
       };
@@ -131,12 +172,14 @@
         _.forEach(response.hits, (hit) => {
           const existing = searchResultsContainer.find(`[data-id="${hit._id}"]`);
           const source = hit._source;
+          const rootFunctionId = source.functionId ? source.functionId.split(' ')[0] : '99';
+          
           const resultHtml = pugSearchResultItem({
             title: source.resultText,
             hit: source,
             score: hit._score,
             id: hit._id,
-            functionClass: this._getActionFunctionClass(),
+            rootFunctionId: rootFunctionId,
             caseGeometries: source.caseGeometries && source.caseGeometries.geometries ? source.caseGeometries.geometries : null
           });
           
@@ -208,6 +251,29 @@
       this._doSearch();
     },
     
+    _onSearchTreeItemClick: function (event) {
+      const item = $(event.target).closest('.search-tree-item');
+      const tree = item.closest('.search-tree-box');
+      const parentId = item.attr('data-id');
+      const parentLevel = parseInt(item.attr('data-level'));
+      
+      if (parentLevel === 0 && item.hasClass('active')) {        
+        this._loadSearchTreeLevel(0);
+        this._functionId = null;
+      } else {
+        tree.find('.search-tree-item').removeClass('active');
+        item.addClass('active');
+
+        if (parentLevel < 2) {
+          this._loadSearchTreeLevel(parentLevel + 1, parentId);
+        }
+
+        this._functionId = item.attr('data-id');
+      }
+      
+      this._doSearch();
+    },
+    
     _onSearchResultItemClick: function (event) {
       if ($(event.target).closest('.map').length) {
         return;
@@ -228,6 +294,7 @@
         
         $.getJSON(`/ajax/action/${apiId}/${actionId}`, (response) => {
           const html = pugSearchResultItemOpen({
+            functionId: item.attr('data-function-id'),
             title: response.title,
             contents: response.contents.sort((a, b) => {
               return a.ordering - b.ordering;

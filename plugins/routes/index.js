@@ -45,21 +45,15 @@
       const size = parseInt(req.body.size);
       const apiIds = req.body.apiIds;
       const geoJson = req.body.geoJson;
+      const functionId = req.body.functionId;
+      const must = [];
       
-      const queryBody = {
-        query: {
-          "bool": {
-            "must": [
-              {
-                "terms" : {
-                  "apiId" : apiIds 
-                }
-              }
-            ]
-          }
+      must.push({
+        "terms" : {
+          "apiId" : apiIds 
         }
-      };
-      
+      });
+        
       if (freeText) {
         queryBody.query.must.push({
           "match" : {
@@ -78,6 +72,22 @@
           }
         };
       }
+      
+      if (functionId) {
+        must.push({
+          "prefix": {
+            "functionId": functionId
+          }
+        });
+      }
+      
+      const queryBody = {
+        query: {
+          "bool": {
+            "must": must
+          }
+        }
+      };
       
       this.search.search({ body: queryBody, from: from, size: size })
         .then((result) => {

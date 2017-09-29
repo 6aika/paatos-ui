@@ -1,8 +1,17 @@
 @import "actions";
+@import 'fonts';
+
+body {
+  font-family: 'Source Sans Pro', sans-serif;
+}
 
 $open-search-content-background: #ebebeb;
 
 .jumbotron {
+  
+  background-image: url('/gfx/paatoshaku_header_bg.jpg');
+  background-repeat: no-repeat;
+  background-size: cover;
 
   .site-title {
     text-transform: uppercase;
@@ -62,11 +71,79 @@ $open-search-content-background: #ebebeb;
 }
 
 .search-tree-container {
+  
   .search-tree-box {
-    padding: 15px;
-    margin: 15px;
     min-height: 600px;
-    background: #7dba00;
+    color: #fff;
+    margin-top: 15px;
+    
+    &.search-tree-level-1 {
+      
+      .search-tree-item {
+        padding: 12px 15px;
+        
+        &:first-child {
+          padding-top: 15px;
+        }
+
+        &:last-child {
+          padding-bottom: 15px;
+        }
+        
+        .fa {
+          width: 40px;
+          text-align: center;
+          padding-right: 10px;
+          font-size: 25px;
+          visibility: visible;
+        }
+      }
+      
+    }
+    
+    .search-tree-item {
+      
+      .col {
+        padding-left: 8px;
+      }
+      
+      border: none;
+      font-weight: bold;
+      font-size: 14px;
+      cursor: pointer;
+      padding-top: 8px;
+      padding-bottom: 8px;
+      
+      &:first-child {
+        padding-top: 20px;
+      }
+      
+      &:last-child {
+        padding-bottom: 20px;
+      }
+      
+      .search-tree-item-name {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
+        display: inline-block;
+      }
+      
+      .fa {
+        width: 40px;
+        text-align: center;
+        font-size: 25px;
+        padding-right: 10px;
+        visibility: hidden;
+      }
+      
+      &.active .fa {
+        visibility: visible;
+      }
+      
+    }
+    
   }
 }
 

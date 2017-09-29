@@ -10,7 +10,8 @@ block custom-head
   script(defer='defer',src='//cdnjs.cloudflare.com/ajax/libs/Shuffle/5.0.1/shuffle.min.js',type='text/javascript')
   script(defer='defer',src='//cdn.metatavu.io//libs/tinycolor/1.4.1/tinycolor.js',type='text/javascript')
   script(defer='defer',src='//cdn.metatavu.io/libs/leaflet/1.2.0/leaflet.js',type='text/javascript')
-  script(defer='defer',src='//cdn.metatavu.io/libs/Leaflet.draw/0.4.12/leaflet.draw.js',type='text/javascript') 
+  script(defer='defer',src='//cdn.metatavu.io/libs/Leaflet.draw/0.4.12/leaflet.draw.js',type='text/javascript')
+  script(defer='defer',src='/js/function-ids.min.js',type='text/javascript')
   script(defer='defer',src='/js/index.min.js',type='text/javascript')
 block body
   .jumbotron
@@ -43,16 +44,15 @@ block body
                   =api.name
                 input(id='filter-by-api-' + api.id, type="checkbox",name="apis",value=api.id)
           .col.filter-box filter-2
-          .col.filter-box filter-3
           .col.filter-box
             .location-filter
       .search-tree-container
         .container-title 
           p Hakupuu
-        .row(style="display:none")
-          .col.search-tree-box Tree-1
-          .col.search-tree-box Tree-2
-          .col.search-tree-box Tree-3
+        .row
+          .col-4.search-tree-box.search-tree-level-1
+          .col-4.search-tree-box.search-tree-level-2
+          .col-4.search-tree-box.search-tree-level-3
       .search-results-container
         .container-title 
           p Haun tulokset

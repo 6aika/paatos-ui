@@ -58,3 +58,11 @@ footer {
   padding-bottom: 20px;
   color: #fff;
 }
+
+@media (min-width: 1203px) {
+  
+  .container {
+    max-width: 1170px;
+  }
+  
+}
