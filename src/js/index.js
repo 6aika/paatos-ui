@@ -41,6 +41,7 @@
       this.element.on("change", '.filter input[type="checkbox"]', $.proxy(this._onToggleFilterChange, this));
       this.element.on("click", '.search-result-item', $.proxy(this._onSearchResultItemClick, this));
       this.element.on("click", '.search-tree-item', $.proxy(this._onSearchTreeItemClick, this));
+      this.element.on("click", '.search-container-title', $.proxy(this._onSearchContainerTitleClick, this));
       
       this._createLocationFilterMap(this.element.find('.location-filter'));
       
@@ -153,11 +154,14 @@
         return;
       }
       
+      const treeEnabled = !$('.search-tree-container').hasClass('container-closed');
+      const filtersEnabled = !$('.filter-container').hasClass('container-closed');
+      
       const options = {
-        apiIds: apiIds,
+        apiIds: filtersEnabled ? apiIds : null,
         freeText: freeText, 
-        geoJson: this._geoJsonQuery ? JSON.stringify(this._geoJsonQuery.geometry) : null,
-        functionId: this._functionId,
+        geoJson: filtersEnabled ? this._geoJsonQuery ? JSON.stringify(this._geoJsonQuery.geometry) : null : null,
+        functionId: treeEnabled ? this._functionId : null,
         from: 0, 
         size: this.options.searchResultsPerPage
       };
@@ -272,6 +276,10 @@
       }
       
       this._doSearch();
+    },
+    
+    _onSearchContainerTitleClick: function (event) {
+      $(event.target).closest('.search-container').toggleClass('search-container-closed');
     },
     
     _onSearchResultItemClick: function (event) {

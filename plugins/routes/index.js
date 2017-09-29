@@ -43,10 +43,11 @@
       const freeText = req.body.freeText;
       const from = parseInt(req.body.from);
       const size = parseInt(req.body.size);
-      const apiIds = req.body.apiIds;
+      const apiIds = req.body.apiIds || Object.keys(config.get('apis'));
       const geoJson = req.body.geoJson;
       const functionId = req.body.functionId;
       const must = [];
+      const filter = {};
       
       must.push({
         "terms" : {
@@ -55,7 +56,7 @@
       });
         
       if (freeText) {
-        queryBody.query.must.push({
+        must.push({
           "match" : {
             "contentTexts" : freeText
           }
@@ -63,12 +64,10 @@
       }
       
       if (geoJson) {
-        queryBody.query.bool.filter = {
-          "geo_shape": {
-            "caseGeometries": {
-              "shape": JSON.parse(geoJson),
-              "relation": "within"
-            }
+        filter["geo_shape"] = {
+          "caseGeometries": {
+            "shape": JSON.parse(geoJson),
+            "relation": "within"
           }
         };
       }
@@ -84,7 +83,8 @@
       const queryBody = {
         query: {
           "bool": {
-            "must": must
+            "must": must,
+            "filter": filter
           }
         }
       };

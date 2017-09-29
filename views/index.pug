@@ -27,36 +27,45 @@ block body
           h3 EU-here
   .content
     .container
-      .free-text-search-container
+      .search-container.free-text-search-container
         .input-group.input-group-lg.main-search-group
           span.input-group-addon.fa.fa-search
           input.freetext-search.form-control(type='text', placeholder='Hae päätöksiä, Vapaa sanahaku, osoite, kaupunki, tehtäväluokka, toimiala, teema, aihe-alue')
           span.input-group-addon.fa.fa-rss
-      .filter-container
-        .container-title 
-          p Rajaa hakutulosta
-        .row
-          .col.filter-box.filter-by-apis
-            for api in apis
-              .filter.api-filter
-                i.fa.fa-map-signs(aria-hidden="true")
-                label(for='filter-by-api-' + api.id)
-                  =api.name
-                input(id='filter-by-api-' + api.id, type="checkbox",name="apis",value=api.id)
-          .col.filter-box filter-2
-          .col.filter-box
-            .location-filter
-      .search-tree-container
-        .container-title 
-          p Hakupuu
-        .row
-          .col-4.search-tree-box.search-tree-level-1
-          .col-4.search-tree-box.search-tree-level-2
-          .col-4.search-tree-box.search-tree-level-3
-      .search-results-container
-        .container-title 
-          p Haun tulokset
-        .row
-          .col.search-results-box
-            .suffle-sizer
-            ul.list-group
+      .search-container.filter-container
+        p.search-container-title 
+          i.fa.fa-plus
+          |Rajaa hakutulosta
+          i.fa.fa-plus
+        .container-contents
+          .row
+            .col.filter-box.filter-by-apis
+              for api in apis
+                .filter.api-filter
+                  i.fa.fa-map-signs(aria-hidden="true")
+                  label(for='filter-by-api-' + api.id)
+                    =api.name
+                  input(id='filter-by-api-' + api.id, type="checkbox",name="apis",value=api.id)
+            .col.filter-box filter-2
+            .col.filter-box
+              .location-filter
+      .search-container.search-tree-container.search-container-closed
+        p.search-container-title 
+          i.fa.fa-plus
+          |Hakupuu
+          i.fa.fa-plus
+        .container-contents
+          .row
+            .col-4.search-tree-box.search-tree-level-1
+            .col-4.search-tree-box.search-tree-level-2
+            .col-4.search-tree-box.search-tree-level-3
+      .search-container.search-results-container
+        p.search-container-title
+          i.fa.fa-plus
+          |Haun tulokset
+          i.fa.fa-plus
+        .container-contents
+          .row
+            .col.search-results-box
+              .suffle-sizer
+              ul.list-group
