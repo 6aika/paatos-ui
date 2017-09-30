@@ -53,6 +53,7 @@
       
       this._loadSearchTreeLevel(0);
       this._updateToggleFilters();
+      this._initializeDateRangeFilter();
       this._doSearch();
     },
     
@@ -95,6 +96,14 @@
       }
       
       return result.children;
+    },
+    
+    _initializeDateRangeFilter: function () {
+      flatpickr(".date-range-filter", {
+        mode: "range",
+        inline: true,
+        onChange: $.proxy(this._onDateRangeFilterChange, this)
+      });
     },
     
     _createLocationFilterMap: function(mapElement) {
@@ -150,6 +159,8 @@
     },
     
     _doSearch: function () {
+      $('.no-results-container').hide();
+      
       const freeText = $('.freetext-search').val();
       const apiIds = $('.api-filter input:checked').map((index, input) => {
         return $(input).val();
@@ -169,7 +180,9 @@
         geoJson: filtersEnabled ? this._geoJsonQuery ? JSON.stringify(this._geoJsonQuery.geometry) : null : null,
         functionId: treeEnabled ? this._functionId : null,
         from: 0, 
-        size: this.options.searchResultsPerPage
+        size: this.options.searchResultsPerPage,
+        eventWithinStart: this._eventWithinFilter ? this._eventWithinFilter[0] : null,
+        eventWithinEnd: this._eventWithinFilter ? this._eventWithinFilter[1] : null
       };
       
       $.post('/ajax/search', options, (response) => {
@@ -211,12 +224,17 @@
           item.removeAttr('data-id');
           return item[0];
         }));
+        
         this.shuffle.sort({
           by: (element) => {
             return parseFloat($(element).attr('data-score'));
           }
         });
 
+        if (!response.hits.length) {
+          $('.no-results-container').show();
+        }
+        
       });
     },
     
@@ -280,6 +298,18 @@
           map.remove();
         }
       }
+    },
+    
+    _onDateRangeFilterChange: function (selectedDates, dateStr, instance) {
+      if (selectedDates.length === 2) {
+        const start = moment(selectedDates[0]).hour(0).minute(0);
+        const end = moment(selectedDates[1]).hour(23).minute(59);
+        this._eventWithinFilter = [start.format(), end.format()];
+      } else {
+        this._eventWithinFilter = null;
+      }
+      
+      this._doSearch();
     },
     
     _onSearchMapDrawEventCreated: function (event) {

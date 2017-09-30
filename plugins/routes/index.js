@@ -46,6 +46,8 @@
       const apiIds = req.body.apiIds || Object.keys(config.get('apis'));
       const geoJson = req.body.geoJson;
       const functionId = req.body.functionId;
+      const eventWithinStart = req.body.eventWithinStart;
+      const eventWithinEnd = req.body.eventWithinEnd;
       const must = [];
       const filter = {};
       
@@ -80,6 +82,24 @@
         });
       }
       
+      if (eventWithinStart && eventWithinEnd) {
+        must.push({
+          "range" : {
+            "eventStart" : {
+              "lte" : eventWithinEnd
+            }
+          }
+        });
+        
+        must.push({
+          "range" : {
+            "eventEnd" : {
+              "gte" : eventWithinStart
+            }
+          }
+        });
+      }
+        
       const queryBody = {
         query: {
           "bool": {

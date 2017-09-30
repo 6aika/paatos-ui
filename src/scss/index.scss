@@ -64,7 +64,7 @@ $open-search-content-background: #ebebeb;
     background: #426cb7;
     
     .location-filter {
-      height: 180px;
+      height: 100%;
     }
     
   }
@@ -273,6 +273,10 @@ $open-search-content-background: #ebebeb;
   
 }
 
+.no-results-container {
+  margin-bottom: 20px;
+}
+
 .filter {
   
   label {
@@ -328,6 +332,22 @@ $open-search-content-background: #ebebeb;
   
   .container-contents {
     display: none;
+  }
+  
+}
+
+.flatpickr-calendar {
+  
+  margin-left: auto;
+  margin-right: auto;
+  
+  &.arrowTop {
+    
+    &::before,
+    &::after {
+      display: none !important;
+    }
+    
   }
   
 }
