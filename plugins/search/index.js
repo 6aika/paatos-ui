@@ -20,7 +20,7 @@
       this.index = config.get('elasticsearch:index');
       
       this.client = new elasticsearch.Client({
-        host: `${config.get('elasticsearch:host')}:${config.get('elasticsearch:port')}`,
+        hosts: config.get('elasticsearch:hosts'),
         log: config.get('elasticsearch:log')
       });
       
