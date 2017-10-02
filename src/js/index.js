@@ -1,5 +1,5 @@
 /* jshint esversion: 6 */
-/* global $, _, tinycolor, L*/
+/* global $, _, tinycolor, L, moment*/
 (() => {
   'use strict';
   
@@ -30,6 +30,7 @@
     _create : function() {
       this._geoJsonQuery = null;
       this._enabledApis = _.keyBy(JSON.parse($('input[name="enabled-apis"]').val()), "id");
+      this._allApisEnabled = false;
       
       this.shuffle = new Shuffle($('.search-results-box .list-group')[0], {
         itemSelector: '.search-result-item',
@@ -44,6 +45,7 @@
       this.element.on("click", '.search-result-icon-container', $.proxy(this._onSearchResultItemIconContainerClick, this));
       this.element.on("click", '.search-tree-item', $.proxy(this._onSearchTreeItemClick, this));
       this.element.on("click", '.search-container-title', $.proxy(this._onSearchContainerTitleClick, this));
+      this.element.on("click", '.remove-filter', $.proxy(this._onRemoveFilterClick, this));
       
       this._createLocationFilterMap(this.element.find('.location-filter'));
       
@@ -100,8 +102,7 @@
     
     _initializeDateRangeFilter: function () {
       flatpickr(".date-range-filter", {
-        mode: "range",
-        inline: true,
+        dateFormat: 'd.m.Y',
         onChange: $.proxy(this._onDateRangeFilterChange, this)
       });
     },
@@ -142,9 +143,19 @@
       this._searchMap.on(L.Draw.Event.EDITED, $.proxy(this._onSearchMapDrawEventEdited, this));
     },
     
-    _updateToggleFilters: function () {
+    _updateToggleFilters: function (e) {
+      if (this._allApisEnabled) {
+        this._allApisEnabled = false;
+        $('.filter input[type="checkbox"]').prop('checked', false);
+        $(e.target).prop('checked', true);
+      }
+      
       if ($('.filter input[type="checkbox"]:checked').length === 0) {
         $('.filter input[type="checkbox"]').prop('checked', true);
+      } 
+      
+      if ($('.filter input[type="checkbox"]:not(:checked)').length === 0) {
+        this._allApisEnabled = true;
       }
       
       $('.filter input[type="checkbox"]').each((index, element) => {
@@ -160,6 +171,7 @@
     
     _doSearch: function () {
       $('.no-results-container').hide();
+      this._updateActiveFilters();
       
       const freeText = $('.freetext-search').val();
       const apiIds = $('.api-filter input:checked').map((index, input) => {
@@ -269,6 +281,8 @@
             sourceApi: item.attr('data-source-api'),
             functionId: item.attr('data-function-id'),
             registerId: item.attr('data-register-id'),
+            apiId: apiId,
+            actionId: actionId,
             title: response.title,
             contents: response.contents.sort((a, b) => {
               return a.ordering - b.ordering;
@@ -299,14 +313,79 @@
         }
       }
     },
-    
+
+    _updateActiveFilters: function() {
+      const filterContainer = $('.active-filters');
+      filterContainer.empty();
+
+      const freeText = $('.freetext-search').val();
+      if (freeText) {
+        filterContainer.append(pugActiveFilterItem({
+          filter: 'freetext',
+          text: `Hakusanalla: ${freeText}`
+        }));        
+      }
+      
+      if (this._eventWithinFilter) {
+        filterContainer.append(pugActiveFilterItem({
+          filter: 'date',
+          text: `${moment(this._eventWithinFilter[0]).format('D.M.YYYY')} - ${moment(this._eventWithinFilter[1]).format('D.M.YYYY')}`
+        }));
+      }
+
+      if (this._geoJsonQuery) {
+        filterContainer.append(pugActiveFilterItem({
+          filter: 'geo',
+          text: 'aluerajaus'
+        }));
+      }
+      
+      if (this._functionId) {
+        filterContainer.append(pugActiveFilterItem({
+          filter: 'functionid',
+          text: $(`.search-tree-item[data-id="${this._functionId}"]`).attr('title')
+        }));  
+      }      
+    },
+
+    _onRemoveFilterClick: function(e) {
+      const filterElement = $(e.target).closest('.active-filter-indicator');
+      const filterType = filterElement.attr('data-filter');
+
+      switch (filterType) {
+        case 'freetext':
+          $('.freetext-search').val('');
+        break;
+        case 'date':
+          this._eventWithinFilter = null;
+          $('.date-range-filter.filter-start').val('');
+          $('.date-range-filter.filter-end').val('');
+        break;
+        case 'geo':
+          this._searchMapEditableLayers.clearLayers();
+          this._geoJsonQuery = null;
+        break;
+        case 'functionid':
+          this._loadSearchTreeLevel(0);
+          this._functionId = null;
+        break;
+      }
+      
+      filterElement.remove();
+      this._doSearch();
+    },
+
     _onDateRangeFilterChange: function (selectedDates, dateStr, instance) {
-      if (selectedDates.length === 2) {
-        const start = moment(selectedDates[0]).hour(0).minute(0);
-        const end = moment(selectedDates[1]).hour(23).minute(59);
-        this._eventWithinFilter = [start.format(), end.format()];
-      } else {
+      const isStartFilter = $(instance.element).hasClass('filter-start');
+      const startDateString = $('.date-range-filter.filter-start').val();
+      const endDateString = $('.date-range-filter.filter-end').val();
+      
+      if (!startDateString && !endDateString) {
         this._eventWithinFilter = null;
+      } else {
+        const start = startDateString ? moment(startDateString, 'DD.MM.YYYY').startOf('day') : moment(0);
+        const end = endDateString ? moment(endDateString, 'DD.MM.YYYY').endOf('day') : moment();
+        this._eventWithinFilter = [start.format(), end.format()];
       }
       
       this._doSearch();
@@ -331,8 +410,8 @@
       this._searchMap.panTo(new L.LatLng( position.coords.latitude, position.coords.longitude));
     },
     
-    _onToggleFilterChange: function () {
-      this._updateToggleFilters();
+    _onToggleFilterChange: function (e) {
+      this._updateToggleFilters(e);
       this._doSearch();
     },
     
