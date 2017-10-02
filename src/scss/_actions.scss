@@ -2,16 +2,19 @@
 @import "icons";
 
 $action-darken-amount: 20%;
+$search-tree-background: #426cb7;
+$search-result-item-background: #97ba54;
 
-@mixin search-result-item-action($functionId, $color, $icon) {
+@mixin search-result-item-action($functionId, $icon) {
   .search-result-item.function-#{$functionId} {
-    background: $color;
+    background: $search-result-item-background;
 
-    &.search-result-item-open .search-result-item-title {
-      color: darken($color, $action-darken-amount);
+    &:hover {
+      background: darken($search-result-item-background, 20%);
     }
   }
   
+  .search-result-item.function-#{$functionId},
   .search-tree-item.function-#{$functionId} {
     i.fa {
       &::before {
@@ -21,28 +24,36 @@ $action-darken-amount: 20%;
   }
   
   .search-tree-item.function-#{$functionId} {
-    background: $color;
+    background: $search-tree-background;
+    
+    &:nth-child(odd) {
+      background: lighten($search-tree-background, 10%);
+    }
+    
+    &.active {
+      background: darken($search-tree-background, 20%);
+    }
     
     &:hover {
-      background: $color;
+      background: darken($search-tree-background, 20%);
     }
   }
   
 }
 
-@include search-result-item-action('00', $function-color-00, $function-icon-00);
-@include search-result-item-action('01', $function-color-01, $function-icon-01);
-@include search-result-item-action('02', $function-color-02, $function-icon-02);
-@include search-result-item-action('03', $function-color-03, $function-icon-03);
-@include search-result-item-action('04', $function-color-04, $function-icon-04);
-@include search-result-item-action('05', $function-color-05, $function-icon-05);
-@include search-result-item-action('06', $function-color-06, $function-icon-06);
-@include search-result-item-action('07', $function-color-07, $function-icon-07);
-@include search-result-item-action('08', $function-color-08, $function-icon-08);
-@include search-result-item-action('09', $function-color-09, $function-icon-09);
-@include search-result-item-action('10', $function-color-10, $function-icon-10);
-@include search-result-item-action('11', $function-color-11, $function-icon-11);
-@include search-result-item-action('12', $function-color-12, $function-icon-12);
-@include search-result-item-action('13', $function-color-13, $function-icon-13);
-@include search-result-item-action('14', $function-color-14, $function-icon-14);
-@include search-result-item-action('99', $function-color-99, '');
+@include search-result-item-action('00', $function-icon-00);
+@include search-result-item-action('01', $function-icon-01);
+@include search-result-item-action('02', $function-icon-02);
+@include search-result-item-action('03', $function-icon-03);
+@include search-result-item-action('04', $function-icon-04);
+@include search-result-item-action('05', $function-icon-05);
+@include search-result-item-action('06', $function-icon-06);
+@include search-result-item-action('07', $function-icon-07);
+@include search-result-item-action('08', $function-icon-08);
+@include search-result-item-action('09', $function-icon-09);
+@include search-result-item-action('10', $function-icon-10);
+@include search-result-item-action('11', $function-icon-11);
+@include search-result-item-action('12', $function-icon-12);
+@include search-result-item-action('13', $function-icon-13);
+@include search-result-item-action('14', $function-icon-14);
+@include search-result-item-action('99', $function-icon-99);

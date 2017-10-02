@@ -1,3 +1,25 @@
+@import 'fonts';
+
+body {
+  font-family: 'Source Sans Pro', sans-serif;
+}
+
+.jumbotron {
+  
+  border-radius: 0;
+  background-image: url('/gfx/paatoshaku_header_bg.jpg');
+  background-repeat: no-repeat;
+  background-size: cover;
+
+  .site-title {
+    text-transform: uppercase;
+  }
+  .site-subtitle {
+    text-transform: uppercase;
+  }
+  
+}
+
 .btn {
   border-radius: 0;
 }

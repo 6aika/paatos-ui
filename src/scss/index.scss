@@ -1,32 +1,22 @@
 @import "actions";
 @import 'fonts';
 
-body {
-  font-family: 'Source Sans Pro', sans-serif;
-}
-
 $open-search-content-background: #ebebeb;
-
-.jumbotron {
-  
-  background-image: url('/gfx/paatoshaku_header_bg.jpg');
-  background-repeat: no-repeat;
-  background-size: cover;
-
-  .site-title {
-    text-transform: uppercase;
-  }
-  .site-subtitle {
-    text-transform: uppercase;
-  }
-  
-}
 
 .list-group-item,
 .suffle-sizer {
   width: 100%;
 }
+
+.active-filter-indicator {
+  margin-right: 5px;
   
+  .fa {
+    padding-left: 3px;
+    cursor: pointer;
+  }
+}
+
 .search-container-title {
   p {
     margin-bottom: -10px;
@@ -62,6 +52,7 @@ $open-search-content-background: #ebebeb;
     margin: 15px;
     min-height: 200px;
     background: #426cb7;
+    color: #fff;
     
     .location-filter {
       height: 100%;
@@ -74,9 +65,12 @@ $open-search-content-background: #ebebeb;
 .search-tree-container {
   
   .search-tree-box {
-    min-height: 600px;
     color: #fff;
     margin-top: 15px;
+    
+    @media (min-width: 720px) { 
+      min-height: 600px;
+    }
     
     &.search-tree-level-1 {
       
@@ -205,14 +199,6 @@ $open-search-content-background: #ebebeb;
       font-size: 28px;
       color: #fff;
       padding-right: 20px;
-
-      &.fa-folder-o {
-        display: inline-block;
-      }
-      
-      &.fa-folder-open-o {
-        display: none;
-      }
     }
     
     &.search-result-item-loading .search-result-details {
@@ -226,17 +212,6 @@ $open-search-content-background: #ebebeb;
     &.search-result-item-open {
     
       background: $open-search-content-background;
-
-      .search-result-icon {
-
-        &.fa-folder-o {
-          display: none;
-        }
-
-        &.fa-folder-open-o {
-          display: inline-block;
-        }
-      }
 
      .search-result-details {
        height: auto;
@@ -308,6 +283,11 @@ $open-search-content-background: #ebebeb;
     margin-top: 15px;
     margin-bottom: 0;
     
+    .close-container {
+      display: inline-block;
+      cursor: pointer;
+    }
+    
     .fa-plus {
       display: none;
     }
@@ -323,6 +303,10 @@ $open-search-content-background: #ebebeb;
     background: $filter-closed-background;
     padding: 15px;
     text-transform: uppercase;
+    
+    .close-container {
+      display: none;
+    }
     
     .fa-plus {
       display: inline-block;
