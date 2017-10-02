@@ -1,0 +1,24 @@
+extends layout/layout
+
+block custom-head
+  title 
+    =title
+block body
+  .content
+    .container
+      .row
+        .col
+          a(href="/")
+            |<-- Takaisin hakuun
+      .row
+        .col
+          h2
+            =title
+      .row
+        .col-8
+          for content in contents
+            if content.title
+              h3
+                =content.title
+            .search-result-content
+              !=content.hypertext

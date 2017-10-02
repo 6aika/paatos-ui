@@ -34,9 +34,25 @@
     getSystemPing(req, res) {
       res.send("PONG");
     }
-
-    getVersion(req, res) {
-      res.send(config.get('app-version'));
+    
+    getSingleAction(req, res) {
+      const apiId = req.params.apiId;
+      const actionId = req.params.actionId;
+      
+      this.apiClient.findAction(apiId, actionId)
+        .then((action) => {
+          if (action) {
+            res.render('action', {
+              title: action.title,
+              contents: action.contents
+            });
+          } else {
+            res.status(404).send('Not found');
+          }
+        })
+        .catch((err) => {
+          res.status(500).send(err);
+        });
     }
     
     postAjaxSearch(req, res) {
@@ -136,8 +152,8 @@
       // Navigation     
       
       app.get("/", this.getIndex.bind(this));
-      app.get("/version", this.getVersion.bind(this));
       app.get("/system/ping", this.getSystemPing.bind(this));
+      app.get('/action/:apiId/:actionId', this.getSingleAction.bind(this));
       app.post('/ajax/search', this.postAjaxSearch.bind(this));
       app.get('/ajax/action/:apiId/:actionId', this.getAjaxAction.bind(this));
     }

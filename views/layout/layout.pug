@@ -18,6 +18,17 @@ html(lang='en')
     link(rel='stylesheet', href='/css/layout.min.css')
     block custom-head
   body
+    .jumbotron
+      .container
+        .row
+          .col-7
+            h1.site-title Päätöshaku
+            p.site-subtitle
+              | Helsinki - Espoo - Vantaa - Tampere - Oulu
+          .col
+            +login-buttons()
+          .col
+            h3 EU-here
     block body
   footer.footer
     .container
