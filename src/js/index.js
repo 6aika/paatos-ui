@@ -36,7 +36,8 @@
         itemSelector: '.search-result-item',
         sizer: $('.suffle-sizer')[0],
         useTransforms: true,
-        speed: 800
+        speed: 650,
+        staggerAmount: 0
       });
       
       this.element.on("keyup", '.freetext-search', $.proxy(this._onFreeTextSearchKeyUp, this));
@@ -269,9 +270,10 @@
       const apiId = $(item).attr('data-api-id');
       const actionId = $(item).attr('data-action-id');
       this.shuffle.layout();
-      
+
       if (item.hasClass('search-result-item-open')) {
         item.addClass('search-result-item-loading');
+        this.shuffle.layout();
         
         const caseGeometriesStr = item.attr('data-case-geometries');
         const caseGeometries = caseGeometriesStr ? JSON.parse(caseGeometriesStr) : null;
@@ -291,6 +293,9 @@
           
           item.find('.search-result-details').html(html);
           
+          item.removeClass('search-result-item-loading');
+          this.shuffle.layout();
+          
           if (caseGeometries && caseGeometries.length) {
             const mapElement = item.find('.map');
             const map = new L.Map(mapElement[0]);
@@ -302,9 +307,7 @@
           } else {
             item.find('.map').hide();
           }
-        
-          item.removeClass('search-result-item-loading');
-          this.shuffle.layout();
+
         });
       } else {
         const map = item.find('.map').data('map');
