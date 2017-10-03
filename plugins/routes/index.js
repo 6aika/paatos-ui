@@ -9,6 +9,7 @@
   const moment = require('moment');
   const config = require('nconf');
   const request = require('request');
+  const RSS = require('rss');
   
   class Routes {
     
@@ -104,6 +105,49 @@
         });
     }
     
+    getRssSearch(req, res) {
+      const searchId = req.params.searchId;
+      this.models.findSavedSearch(searchId)
+        .then((savedSearch) => {
+          if (!savedSearch) {
+            return null;
+          } else {
+            const searchObject = JSON.parse(savedSearch.search);
+            return this.search.search(searchObject);
+          }
+        })
+        .then((result) => {
+          if (result) {
+            const siteUrl = `${req.protocol}://${req.get('host')}`
+            const feedUrl = `${siteUrl}${req.originalUrl}`
+            const feed = new RSS({
+              title: "Päätöshaku",
+              site_url: siteUrl,
+              feed_url: feedUrl
+            });
+
+            const hits = result.hits.hits;
+             for (let i = 0; i < hits.length; i++) {
+               const source = hits[i]._source;
+               feed.item({
+                 title: source.title,
+                 description: source.resultText,
+                 url: `${siteUrl}/action/${source.apiId}/${source.actionId}`,
+                 guid: `${source.apiId}-${source.actionId}`,
+                 author: `${config.get(`apis:${source.apiId}`).name} / ${source.organizationName}`,
+                 date: source.eventStart
+               });
+             }
+             res.send(feed.xml());
+          } else {
+            res.status(404).send();
+          }
+        })
+        .catch((err) => {
+          res.status(500).send(err);
+        });
+    }
+    
     parseSearchObject(body) {
       const freeText = body.freeText;
       const from = parseInt(body.from);
@@ -188,6 +232,7 @@
       app.post('/ajax/search', this.postAjaxSearch.bind(this));
       app.post('/ajax/search/save', this.postAjaxSearchSave.bind(this));
       app.get('/ajax/action/:apiId/:actionId', this.getAjaxAction.bind(this));
+      app.get('/rss/:searchId', this.getRssSearch.bind(this));
     }
     
   };

@@ -50,8 +50,9 @@
       this.element.on("click", '.search-container-title', $.proxy(this._onSearchContainerTitleClick, this));
       this.element.on("click", '.remove-filter', $.proxy(this._onRemoveFilterClick, this));
       this.element.on("click", '.save-search-btn', $.proxy(this._saveSearch, this));
-      this.element.on("click", '.copy-to-clipboard-btn', $.proxy(this._copyToClipboard, this));      
-
+      this.element.on("click", '.copy-to-clipboard-btn', $.proxy(this._copyToClipboard, this));
+      this.element.on("click", '.get-rss-btn', $.proxy(this._createRssFeed, this));
+      
       this._createLocationFilterMap(this.element.find('.location-filter'));
       
       if (navigator.geolocation) {
@@ -253,6 +254,13 @@
         eventWithinStart: filtersEnabled && this._eventWithinStart ? this._eventWithinStart.format() : null,
         eventWithinEnd: filtersEnabled && this._eventWithinEnd ? this._eventWithinEnd.format() : null
       };
+    },
+
+    _createRssFeed: function() {
+      const options = this._parseSearch();
+      $.post('/ajax/search/save', options, (response) => {
+         window.open(`${location.protocol}//${location.host}${location.pathname}rss/${encodeURIComponent(response.id)}`, '_blank');
+      });
     },
 
     _saveSearch: function() {
