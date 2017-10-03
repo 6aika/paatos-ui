@@ -7,7 +7,14 @@ $open-search-content-background: #ebebeb;
 .suffle-sizer {
   width: 100%;
 }
-
+.save-search-container {
+  margin-top: 15px;
+  
+  .search-url-container,
+  .copy-to-clipboard-btn {
+    display: none;
+  }
+}
 .active-filter-indicator {
   margin-right: 5px;
   

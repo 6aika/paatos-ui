@@ -31,6 +31,8 @@
       this._geoJsonQuery = null;
       this._enabledApis = _.keyBy(JSON.parse($('input[name="enabled-apis"]').val()), "id");
       this._allApisEnabled = false;
+      this._eventWithinStart = null;
+      this._eventWithinEnd = null;
       
       this.shuffle = new Shuffle($('.search-results-box .list-group')[0], {
         itemSelector: '.search-result-item',
@@ -47,7 +49,9 @@
       this.element.on("click", '.search-tree-item', $.proxy(this._onSearchTreeItemClick, this));
       this.element.on("click", '.search-container-title', $.proxy(this._onSearchContainerTitleClick, this));
       this.element.on("click", '.remove-filter', $.proxy(this._onRemoveFilterClick, this));
-      
+      this.element.on("click", '.save-search-btn', $.proxy(this._saveSearch, this));
+      this.element.on("click", '.copy-to-clipboard-btn', $.proxy(this._copyToClipboard, this));      
+
       this._createLocationFilterMap(this.element.find('.location-filter'));
       
       if (navigator.geolocation) {
@@ -55,9 +59,65 @@
       }
       
       this._loadSearchTreeLevel(0);
-      this._updateToggleFilters();
       this._initializeDateRangeFilter();
+      this._processSavedSearch();
+      this._updateToggleFilters();
       this._doSearch();
+    },
+    
+    _processSavedSearch: function() {
+      if (!$('.saved-search').val()) {
+        return;
+      }
+      
+      const savedSearch = JSON.parse($('.saved-search').val());
+      if (savedSearch.body) {
+        const searchquery = savedSearch.body.query.bool;
+        
+        if (searchquery.filter && searchquery.filter['geo_shape'] && searchquery.filter['geo_shape'].caseGeometries) {
+          const filterLayer = L.geoJSON(searchquery.filter['geo_shape'].caseGeometries.shape);
+          this._searchMapEditableLayers.addLayer(filterLayer);
+          this._geoJsonQuery = filterLayer.toGeoJSON().features[0];
+          this._searchMap.fitBounds(filterLayer.getBounds().pad(0.1), { maxZoom: 14 });
+        }
+        if (searchquery.must) {
+          let searchFilters = {};
+          for (let i = 0; i < searchquery.must.length; i++) {
+            searchFilters = _.merge(searchFilters, searchquery.must[i]);
+          }
+          if (searchFilters.terms) {
+            const apiFilters = searchFilters.terms.apiId;
+            for (let i = 0; i < apiFilters.length; i++) {
+              $(`.filter input[type="checkbox"][value="${apiFilters[i]}"]`).prop('checked', true);
+            }
+          }
+          if (searchFilters.match) {
+            $('.freetext-search').val(searchFilters.match.contentTexts);
+          }
+          if (searchFilters.range) {
+            const rangeFilters = searchFilters.range;
+            if (rangeFilters.eventStart) {
+              this._eventWithinEnd = moment(rangeFilters.eventStart.lte);
+              $('.date-range-filter.filter-end')[0]._flatpickr.setDate(this._eventWithinEnd.toDate(), false);
+            }
+
+            if (rangeFilters.eventEnd) {
+              this._eventWithinStart = moment(rangeFilters.eventEnd.gte);
+              $('.date-range-filter.filter-start')[0]._flatpickr.setDate(this._eventWithinStart.toDate(), false);
+            }
+          }
+          if (searchFilters.prefix) {
+            $('.search-tree-container').removeClass('search-container-closed');
+            const treeIds = searchFilters.prefix.functionId.split(' ');
+            treeIds.unshift(null);
+            for(let i = 0; i < treeIds.length; i++) {
+              this._loadSearchTreeLevel(i, treeIds[i]);
+            }
+            $(`.search-tree-item[data-id="${searchFilters.prefix.functionId}"]`).click();
+          }
+        }
+      }
+      
     },
     
     _getApiName: function (apiId) {
@@ -159,6 +219,10 @@
         this._allApisEnabled = true;
       }
       
+      this._updateApiFilterIcons();
+    },
+    
+    _updateApiFilterIcons: function() {
       $('.filter input[type="checkbox"]').each((index, element) => {
         const input = $(element);
         const filter = input.closest('.filter');
@@ -170,33 +234,56 @@
       });
     },
     
-    _doSearch: function () {
-      $('.no-results-container').hide();
-      this._updateActiveFilters();
-      
+    _parseSearch: function() {
       const freeText = $('.freetext-search').val();
       const apiIds = $('.api-filter input:checked').map((index, input) => {
         return $(input).val();
       }).get();
+
+      const treeEnabled = !$('.search-tree-container').hasClass('search-container-closed');
+      const filtersEnabled = !$('.filter-container').hasClass('search-container-closed');
       
-      if (!apiIds.length) {
-        $('.search-results-box ul.list-group').empty();
-        return;
-      }
-      
-      const treeEnabled = !$('.search-tree-container').hasClass('container-closed');
-      const filtersEnabled = !$('.filter-container').hasClass('container-closed');
-      
-      const options = {
+      return {
         apiIds: filtersEnabled ? apiIds : null,
         freeText: freeText, 
         geoJson: filtersEnabled ? this._geoJsonQuery ? JSON.stringify(this._geoJsonQuery.geometry) : null : null,
         functionId: treeEnabled ? this._functionId : null,
         from: 0, 
         size: this.options.searchResultsPerPage,
-        eventWithinStart: this._eventWithinFilter ? this._eventWithinFilter[0] : null,
-        eventWithinEnd: this._eventWithinFilter ? this._eventWithinFilter[1] : null
+        eventWithinStart: filtersEnabled && this._eventWithinStart ? this._eventWithinStart.format() : null,
+        eventWithinEnd: filtersEnabled && this._eventWithinEnd ? this._eventWithinEnd.format() : null
       };
+    },
+
+    _saveSearch: function() {
+      const options = this._parseSearch();
+      $.post('/ajax/search/save', options, (response) => {
+        $('.search-url-container').val(`${location.protocol}//${location.host}${location.pathname}?search=${encodeURIComponent(response.id)}`);
+        $('.search-url-container,.copy-to-clipboard-btn').show();
+      });
+    },
+    
+    _copyToClipboard: function(e) {
+      if(!$('.search-url-container').val()) {
+        return;
+      }
+
+      const options = this._parseSearch();
+      $('.search-url-container').select();
+      document.execCommand("copy");
+      $(e.target).tooltip({title: "Copied to clipboard!"});
+      $(e.target).tooltip('show');
+      setTimeout(() => {
+        $(e.target).tooltip('dispose');
+      }, 3000);
+    },
+    
+    _doSearch: function () {
+      $('.no-results-container').hide();
+      $('.search-url-container,.copy-to-clipboard-btn').hide();
+      
+      const options = this._parseSearch();
+      this._updateActiveFilters(options);
       
       $.post('/ajax/search', options, (response) => {
         const searchResultsContainer = $('.search-results-box ul.list-group'); 
@@ -317,38 +404,63 @@
       }
     },
 
-    _updateActiveFilters: function() {
+    _updateActiveFilters: function(searchOptions) {
       const filterContainer = $('.active-filters');
       filterContainer.empty();
-
-      const freeText = $('.freetext-search').val();
-      if (freeText) {
+      if (searchOptions.freeText) {
         filterContainer.append(pugActiveFilterItem({
           filter: 'freetext',
-          text: `Hakusanalla: ${freeText}`
+          text: `Hakusanalla: ${searchOptions.freeText}`
         }));        
       }
       
-      if (this._eventWithinFilter) {
+      if ($('.filter input[type="checkbox"]:not(:checked)').length > 0 && searchOptions.apiIds) {
+        const activeApiNames = _.map(searchOptions.apiIds, (apiId) => {
+          return this._getApiName(apiId);
+        });
+        
+        filterContainer.append(pugActiveFilterItem({
+          filter: 'apiids',
+          text: `Vain rajapinnoista: ${activeApiNames.join(',')}`
+        }));      
+      }
+
+      if (searchOptions.eventWithinStart || searchOptions.eventWithinEnd) {
+        let filterText = '';
+        if (!searchOptions.eventWithinStart ) {
+          filterText = `${moment(searchOptions.eventWithinEnd).format('D.M.YYYY')} asti`;
+        } else if (!searchOptions.eventWithinEnd) {
+          filterText = `alkaen ${moment(searchOptions.eventWithinStart).format('D.M.YYYY')}`;
+        } else {
+          filterText = `${moment(searchOptions.eventWithinStart).format('D.M.YYYY')} - ${moment(searchOptions.eventWithinEnd).format('D.M.YYYY')}`
+        }
+        
         filterContainer.append(pugActiveFilterItem({
           filter: 'date',
-          text: `${moment(this._eventWithinFilter[0]).format('D.M.YYYY')} - ${moment(this._eventWithinFilter[1]).format('D.M.YYYY')}`
+          text: filterText
         }));
       }
 
-      if (this._geoJsonQuery) {
+      if (searchOptions.geoJson) {
         filterContainer.append(pugActiveFilterItem({
           filter: 'geo',
           text: 'aluerajaus'
         }));
       }
       
-      if (this._functionId) {
+      if (searchOptions.functionId) {
         filterContainer.append(pugActiveFilterItem({
           filter: 'functionid',
-          text: $(`.search-tree-item[data-id="${this._functionId}"]`).attr('title')
+          text: $(`.search-tree-item[data-id="${searchOptions.functionId}"]`).attr('title')
         }));  
-      }      
+      }
+      
+      if ($('.active-filter-indicator').length === 0) {
+        $('.active-filters-text').text('');
+      } else {
+        $('.active-filters-text').text('Suotimet:');
+      }
+      
     },
 
     _onRemoveFilterClick: function(e) {
@@ -359,8 +471,14 @@
         case 'freetext':
           $('.freetext-search').val('');
         break;
+        case 'apiids':
+          $('.filter input[type="checkbox"]').prop('checked', true);
+          this._allApisEnabled = true;
+          this._updateApiFilterIcons();
+        break;
         case 'date':
-          this._eventWithinFilter = null;
+          this._eventWithinStart = null;
+          this._eventWithinEnd = null;
           $('.date-range-filter.filter-start').val('');
           $('.date-range-filter.filter-end').val('');
         break;
@@ -382,13 +500,17 @@
       const isStartFilter = $(instance.element).hasClass('filter-start');
       const startDateString = $('.date-range-filter.filter-start').val();
       const endDateString = $('.date-range-filter.filter-end').val();
-      
-      if (!startDateString && !endDateString) {
-        this._eventWithinFilter = null;
+
+      if (startDateString) {
+        this._eventWithinStart = moment(startDateString, 'DD.MM.YYYY').startOf('day');
       } else {
-        const start = startDateString ? moment(startDateString, 'DD.MM.YYYY').startOf('day') : moment(0);
-        const end = endDateString ? moment(endDateString, 'DD.MM.YYYY').endOf('day') : moment();
-        this._eventWithinFilter = [start.format(), end.format()];
+        this._eventWithinStart = null;
+      }
+
+      if (endDateString) {
+        this._eventWithinEnd = moment(endDateString, 'DD.MM.YYYY').endOf('day');
+      } else {
+        this._eventWithinEnd = null;
       }
       
       this._doSearch();
@@ -447,6 +569,7 @@
     
     _onSearchContainerTitleClick: function (event) {
       $(event.target).closest('.search-container').toggleClass('search-container-closed');
+      this._doSearch();
     },
     
     _onSearchResultItemIconContainerClick: function () {

@@ -20,15 +20,31 @@
     }
     
     getIndex(req, res) {
-      res.render('index', Object.assign({
-        apis: _.map(config.get(`apis`), (config, id) => {
-          return {
-            id: id,
-            name: config.name
-          };
-        }),
-        locale: req.i18n.getLocale()
-      }, req.paatosUiCommon));
+      const preRenderTasks = [];
+      let savedSearch = null;
+      if (req.query.search) {
+        preRenderTasks.push(this.models.findSavedSearch(req.query.search));
+      }
+      
+      Promise.all(preRenderTasks)
+        .then((result) => {
+          savedSearch = result ? result[0] : null;
+        })
+        .catch((error) => {
+          console.error(error);
+        })
+        .then(() => {
+          res.render('index', Object.assign({
+            savedSearch: savedSearch ? savedSearch.search : null,
+            apis: _.map(config.get(`apis`), (config, id) => {
+              return {
+                id: id,
+                name: config.name
+              };
+            }),
+            locale: req.i18n.getLocale()
+          }, req.paatosUiCommon));
+        });
     }
     
     getSystemPing(req, res) {
@@ -56,14 +72,47 @@
     }
     
     postAjaxSearch(req, res) {
-      const freeText = req.body.freeText;
-      const from = parseInt(req.body.from);
-      const size = parseInt(req.body.size);
-      const apiIds = req.body.apiIds || Object.keys(config.get('apis'));
-      const geoJson = req.body.geoJson;
-      const functionId = req.body.functionId;
-      const eventWithinStart = req.body.eventWithinStart;
-      const eventWithinEnd = req.body.eventWithinEnd;
+      const searchObject = this.parseSearchObject(req.body);
+      
+      this.search.search(searchObject)
+        .then((result) => {
+          res.send(result.hits);
+        });
+    }
+    
+    postAjaxSearchSave(req, res) {
+      const searchObject = this.parseSearchObject(req.body);
+      this.models.createSavedSearch(JSON.stringify(searchObject), null)
+        .then((savedSearch) => { res.send(savedSearch) })
+        .catch((err) => { res.status(500).send(err) });
+    }
+    
+    getAjaxAction(req, res) {
+      const apiId = req.params.apiId;
+      const actionId = req.params.actionId;
+      
+      this.apiClient.findAction(apiId, actionId)
+        .then((action) => {
+          if (action) {
+            res.send(action);
+          } else {
+            res.status(404).send();
+          }
+        })
+        .catch((err) => {
+          res.status(500).send(err);
+        });
+    }
+    
+    parseSearchObject(body) {
+      const freeText = body.freeText;
+      const from = parseInt(body.from);
+      const size = parseInt(body.size);
+      const apiIds = body.apiIds || Object.keys(config.get('apis'));
+      const geoJson = body.geoJson;
+      const functionId = body.functionId;
+      const eventWithinStart = body.eventWithinStart;
+      const eventWithinEnd = body.eventWithinEnd;
       const must = [];
       const filter = {};
       
@@ -98,7 +147,7 @@
         });
       }
       
-      if (eventWithinStart && eventWithinEnd) {
+      if (eventWithinEnd) {
         must.push({
           "range" : {
             "eventStart" : {
@@ -106,7 +155,9 @@
             }
           }
         });
-        
+      }
+
+      if (eventWithinStart) {
         must.push({
           "range" : {
             "eventEnd" : {
@@ -125,27 +176,7 @@
         }
       };
       
-      this.search.search({ body: queryBody, from: from, size: size })
-        .then((result) => {
-          res.send(result.hits);
-        });
-    }
-    
-    getAjaxAction(req, res) {
-      const apiId = req.params.apiId;
-      const actionId = req.params.actionId;
-      
-      this.apiClient.findAction(apiId, actionId)
-        .then((action) => {
-          if (action) {
-            res.send(action);
-          } else {
-            res.status(404).send();
-          }
-        })
-        .catch((err) => {
-          res.status(500).send(err);
-        });
+      return { body: queryBody, from: from, size: size };
     }
     
     register(app, keycloak) {
@@ -155,6 +186,7 @@
       app.get("/system/ping", this.getSystemPing.bind(this));
       app.get('/action/:apiId/:actionId', this.getSingleAction.bind(this));
       app.post('/ajax/search', this.postAjaxSearch.bind(this));
+      app.post('/ajax/search/save', this.postAjaxSearchSave.bind(this));
       app.get('/ajax/action/:apiId/:actionId', this.getAjaxAction.bind(this));
     }
     

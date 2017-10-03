@@ -28,6 +28,16 @@
         expires: Sequelize.DATE,
         data: Sequelize.TEXT
       });
+      
+      this.defineModel('SavedSearch', {
+        id: {
+          type: Sequelize.UUID,
+          defaultValue: Sequelize.UUIDV4,
+          primaryKey: true
+        },
+        userId: Sequelize.STRING(191),
+        search: Sequelize.TEXT('long')
+      });
     }
     
     defineModel(name, attributes, options) {
@@ -37,6 +47,18 @@
           collate: 'utf8mb4_unicode_ci'
         }
       }));
+      this[name].sync();
+    }
+
+    findSavedSearch(id) {
+      return this.SavedSearch.findOne({ where: { id : id } });
+    }
+    
+    createSavedSearch(searchJson, userId) {
+      return this.SavedSearch.create({
+        search: searchJson,
+        userId: userId
+      });
     }
     
   } 
