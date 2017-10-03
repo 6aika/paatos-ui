@@ -110,9 +110,10 @@
           if (searchFilters.prefix) {
             $('.search-tree-container').removeClass('search-container-closed');
             const treeIds = searchFilters.prefix.functionId.split(' ');
-            treeIds.unshift(null);
-            for(let i = 0; i < treeIds.length; i++) {
-              this._loadSearchTreeLevel(i, treeIds[i]);
+            let currentId = treeIds[0];
+            for(let i = 1; i < treeIds.length; i++) {
+              this._loadSearchTreeLevel(i, currentId);
+              currentId += ` ${treeIds[i]}`;
             }
             $(`.search-tree-item[data-id="${searchFilters.prefix.functionId}"]`).click();
           }
