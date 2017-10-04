@@ -7,6 +7,16 @@ $open-search-content-background: #ebebeb;
 .suffle-sizer {
   width: 100%;
 }
+
+.loader {
+  width: 100%;
+  min-height: 200px;
+  background-image: url('/gfx/loader.svg');
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 64px;
+}
+
 .save-search-container {
   margin-top: 15px;
   

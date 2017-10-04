@@ -6,7 +6,7 @@
   $.widget("custom.search", {
     
     options: {
-      searchResultsPerPage: 50,
+      searchResultsPerPage: 20,
       leaflet: {
         tiles: {
           urlTemplate: 'https://stamen-tiles.a.ssl.fastly.net/terrain/{z}/{x}/{y}.png',
@@ -33,15 +33,24 @@
       this._allApisEnabled = false;
       this._eventWithinStart = null;
       this._eventWithinEnd = null;
+      this._offset = 0;
+      this._total = 0;
+      this._loadingMore = false;
       
-      this.shuffle = new Shuffle($('.search-results-box .list-group')[0], {
+      this._isotope = $('.search-result-rows-container').isotope({
         itemSelector: '.search-result-item',
-        sizer: $('.suffle-sizer')[0],
-        useTransforms: true,
-        speed: 650,
-        staggerAmount: 0
+        layoutMode: 'vertical',
+         getSortData: {
+          score: '[data-score] parseFloat',
+          title: '[data-title]',
+        },
+        sortBy: [ 'score', 'title' ],
+        sortAscending: {
+          score: false,
+          title: true,
+        }
       });
-      
+
       this.element.on("keyup", '.freetext-search', $.proxy(this._onFreeTextSearchKeyUp, this));
       this.element.on("change", '.filter input[type="checkbox"]', $.proxy(this._onToggleFilterChange, this));
       this.element.on("click", '.search-result-item-title-container', $.proxy(this._onSearchResultItemTitleContainerClick, this));
@@ -52,6 +61,7 @@
       this.element.on("click", '.save-search-btn', $.proxy(this._saveSearch, this));
       this.element.on("click", '.copy-to-clipboard-btn', $.proxy(this._copyToClipboard, this));
       this.element.on("click", '.get-rss-btn', $.proxy(this._createRssFeed, this));
+      $(window).scroll($.proxy(this._onWindowScroll, this))
       
       this._createLocationFilterMap(this.element.find('.location-filter'));
       
@@ -64,6 +74,17 @@
       this._processSavedSearch();
       this._updateToggleFilters();
       this._doSearch();
+    },
+    
+    _onWindowScroll: function() {
+      
+      if ($(window).scrollTop() + $(window).height() > $(document).height() - 100) {
+        if (!this._loadingMore && this._total > 0 && this._offset < this._total) {
+          this._loadingMore = true;
+          this._offset += this.options.searchResultsPerPage;
+          this._doSearch(true);
+        }
+      }
     },
     
     _processSavedSearch: function() {
@@ -250,7 +271,7 @@
         freeText: freeText, 
         geoJson: filtersEnabled ? this._geoJsonQuery ? JSON.stringify(this._geoJsonQuery.geometry) : null : null,
         functionId: treeEnabled ? this._functionId : null,
-        from: 0, 
+        from: this._offset, 
         size: this.options.searchResultsPerPage,
         eventWithinStart: filtersEnabled && this._eventWithinStart ? this._eventWithinStart.format() : null,
         eventWithinEnd: filtersEnabled && this._eventWithinEnd ? this._eventWithinEnd.format() : null
@@ -287,15 +308,17 @@
       }, 3000);
     },
     
-    _doSearch: function () {
+    _doSearch: function (append) {
       $('.no-results-container').hide();
       $('.search-url-container,.copy-to-clipboard-btn').hide();
       
       const options = this._parseSearch();
       this._updateActiveFilters(options);
-      
+      const searchResultsContainer = $('.search-result-rows-container');
+      searchResultsContainer.append($('<div>').addClass('loader'));
       $.post('/ajax/search', options, (response) => {
-        const searchResultsContainer = $('.search-results-box ul.list-group'); 
+        this._total = response.total;
+        
         const addElements = [];
         const existingIds = searchResultsContainer.find('.list-group-item.search-result-item').map((index, item) => {
           return $(item).attr('data-id');
@@ -315,35 +338,39 @@
             rootFunctionId: rootFunctionId,
             caseGeometries: source.caseGeometries && source.caseGeometries.geometries ? source.caseGeometries.geometries : null
           });
-          
+        
           _.pull(existingIds, hit._id);
           
           if (existing.length) {
             existing.attr('data-score', hit._score);
-          } else {
-            const addElement = $(resultHtml);          
-            addElements.push(addElement[0]);
-            addElement.appendTo(searchResultsContainer);
+            this._isotope.isotope( 'updateSortData', existing )
+          } else {    
+            addElements.push($(resultHtml));
           }
-        });
-        
-        this.shuffle.add(addElements);
-        this.shuffle.remove(_.map(existingIds, (existingId) => {
-          const item = searchResultsContainer.find(`.list-group-item.search-result-item[data-id="${existingId}"]`);
-          item.removeAttr('data-id');
-          return item[0];
-        }));
-        
-        this.shuffle.sort({
-          by: (element) => {
-            return parseFloat($(element).attr('data-score'));
-          }
+
         });
 
-        if (!response.hits.length) {
+        $('.loader').remove();
+
+        if (!append) {
+          this._isotope.isotope( 'insert', _.map(addElements, (elementToAdd) => { return elementToAdd[0]; }));
+
+          const itemsToRemove = _.map(existingIds, (existingId) => {
+            const item = searchResultsContainer.find(`.list-group-item.search-result-item[data-id="${existingId}"]`);
+            item.removeAttr('data-id');
+            return item[0];
+          });
+
+          this._isotope.isotope('remove', itemsToRemove).isotope('layout');
+        } else {
+          _.forEach(addElements, (elementToAdd) => {this._isotope.append( elementToAdd ).isotope('appended', elementToAdd ); })
+        }
+
+        if (!response.hits.length && $('.search-result-item[data-id]').length === 0) {
           $('.no-results-container').show();
         }
-        
+
+        this._loadingMore = false;
       });
     },
     
@@ -365,12 +392,12 @@
       item.toggleClass('search-result-item-open');
       const apiId = $(item).attr('data-api-id');
       const actionId = $(item).attr('data-action-id');
-      this.shuffle.layout();
+      this._isotope.isotope('layout');
 
       if (item.hasClass('search-result-item-open')) {
         item.addClass('search-result-item-loading');
-        this.shuffle.layout();
-        
+        this._isotope.isotope('layout');
+
         const caseGeometriesStr = item.attr('data-case-geometries');
         const caseGeometries = caseGeometriesStr ? JSON.parse(caseGeometriesStr) : null;
         
@@ -390,8 +417,8 @@
           item.find('.search-result-details').html(html);
           
           item.removeClass('search-result-item-loading');
-          this.shuffle.layout();
-          
+          this._isotope.isotope('layout');
+
           if (caseGeometries && caseGeometries.length) {
             const mapElement = item.find('.map');
             const map = new L.Map(mapElement[0]);
@@ -502,6 +529,7 @@
       }
       
       filterElement.remove();
+      this._offset = 0;
       this._doSearch();
     },
 
@@ -522,6 +550,7 @@
         this._eventWithinEnd = null;
       }
       
+      this._offset = 0;
       this._doSearch();
     },
     
@@ -530,6 +559,7 @@
       const layer = event.layer;
       this._searchMapEditableLayers.addLayer(layer);
       this._geoJsonQuery = layer.toGeoJSON();
+      this._offset = 0;
       this._doSearch();
     },
     
@@ -537,6 +567,7 @@
       const layers = this._searchMapEditableLayers.getLayers();
       const layer = layers[0];
       this._geoJsonQuery = layer.toGeoJSON();
+      this._offset = 0;
       this._doSearch();
     },
     
@@ -546,10 +577,12 @@
     
     _onToggleFilterChange: function (e) {
       this._updateToggleFilters(e);
+      this._offset = 0;
       this._doSearch();
     },
     
     _onFreeTextSearchKeyUp: function (event) {
+      this._offset = 0;
       this._doSearch();
     },
     
@@ -573,11 +606,13 @@
         this._functionId = item.attr('data-id');
       }
       
+      this._offset = 0;
       this._doSearch();
     },
     
     _onSearchContainerTitleClick: function (event) {
       $(event.target).closest('.search-container').toggleClass('search-container-closed');
+      this._offset = 0;
       this._doSearch();
     },
     

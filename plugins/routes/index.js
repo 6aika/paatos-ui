@@ -220,7 +220,7 @@
         }
       };
       
-      return { body: queryBody, from: from, size: size };
+      return { body: queryBody, from: from, size: size, sort: ['_score', 'resultText'] };
     }
     
     register(app, keycloak) {
