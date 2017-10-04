@@ -138,6 +138,7 @@
                  date: source.eventStart
                });
              }
+             res.header("Content-Type", "application/rss+xml");
              res.send(feed.xml());
           } else {
             res.status(404).send();

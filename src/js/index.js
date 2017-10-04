@@ -281,7 +281,8 @@
     _createRssFeed: function() {
       const options = this._parseSearch();
       $.post('/ajax/search/save', options, (response) => {
-         window.open(`${location.protocol}//${location.host}${location.pathname}rss/${encodeURIComponent(response.id)}`, '_blank');
+         const rssUrl = `${location.protocol}//${location.host}${location.pathname}rss/${encodeURIComponent(response.id)}`;
+         $('.rss-link-container').attr('href', rssUrl).text(rssUrl).show();
       });
     },
 
@@ -353,6 +354,8 @@
         $('.loader').remove();
 
         if (!append) {
+          $('.rss-link-container').hide();
+          
           this._isotope.isotope( 'insert', _.map(addElements, (elementToAdd) => { return elementToAdd[0]; }));
 
           const itemsToRemove = _.map(existingIds, (existingId) => {
