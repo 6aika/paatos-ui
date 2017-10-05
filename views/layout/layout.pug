@@ -23,12 +23,12 @@ html(lang='en')
         .row
           .col-7
             h1.site-title Päätöshaku
+              i.fa.fa-search.title-icon
             p.site-subtitle
               | Helsinki - Espoo - Vantaa - Tampere - Oulu
           .col
-            +login-buttons()
           .col
-            h3 EU-here
+            img.eu-logo(src='/gfx/paatoshaku_eulogot_header.jpg')
     block body
   footer.footer
     .container
@@ -36,12 +36,8 @@ html(lang='en')
         .col
           .row
             .col
-              +login-buttons()
-            .col
-              p Info - 1
-            .col
-              p Info - 2
-            .col
-              p Info - 3
+              a.github-link(href='https://github.com/6aika/paatos-ui')
+                  i.fa.fa-github
+                  span.github-link-text  github.com/6aika/paatos-ui
         .col-5
-          h3 EU here
+          img.eu-logo(src='/gfx/paatoshaku_eulogot_footer.jpg')
