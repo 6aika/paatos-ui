@@ -2,11 +2,30 @@
 @import 'fonts';
 
 $open-search-content-background: #ebebeb;
+$search-result-item-background: #97ba54;
 
 .list-group-item,
 .suffle-sizer {
   width: 100%;
 }
+
+.date-filter-box {
+  label {
+    font-weight: bold;
+  }
+}
+
+.date-filter-title {
+  font-weight: bold;
+  
+  .fa {
+    margin-right: 10px;
+  }
+}
+
+.date-filter-details {
+  margin-top: 25px;
+} 
 
 .loader {
   width: 100%;
@@ -29,11 +48,20 @@ $open-search-content-background: #ebebeb;
     display: none;
   }
 }
+
+.active-filters-container {
+  margin-top: 10px;
+  margin-bottom: 10px; 
+}
+
 .active-filter-indicator {
   margin-right: 5px;
+  font-size: 14px;
+  padding: 7px 10px;
+  
   
   .fa {
-    padding-left: 3px;
+    padding-left: 5px;
     cursor: pointer;
   }
 }
@@ -70,6 +98,10 @@ $open-search-content-background: #ebebeb;
   }
 }
 
+.locate-address-btn {
+  width: 40px;
+}
+
 .filter-container {
   
   .filter-box {
@@ -79,9 +111,18 @@ $open-search-content-background: #ebebeb;
     background: #426cb7;
     color: #fff;
     
+    .api-filter {
+      margin: 20px;
+      font-weight: bold;
+
+      .fa {
+        font-size: 22px;
+        vertical-align: middle;
+      }
+    } 
+    
     .location-filter {
-      height: 100%;
-      min-height: 302px;
+      height: 250px;
     }
     
   }
@@ -237,6 +278,11 @@ $open-search-content-background: #ebebeb;
     &.search-result-item-open {
     
       background: $open-search-content-background;
+      
+      .search-result-item-title,
+      .fa {
+        color: darken($search-result-item-background, 20%);
+      }
 
      .search-result-details {
        height: auto;

@@ -61,7 +61,8 @@
       this.element.on("click", '.save-search-btn', $.proxy(this._saveSearch, this));
       this.element.on("click", '.copy-to-clipboard-btn', $.proxy(this._copyToClipboard, this));
       this.element.on("click", '.get-rss-btn', $.proxy(this._createRssFeed, this));
-      $(window).scroll($.proxy(this._onWindowScroll, this))
+      this.element.on("click", '.locate-address-btn', $.proxy(this._geocodeAddress, this));
+      $(window).scroll($.proxy(this._onWindowScroll, this));
       
       this._createLocationFilterMap(this.element.find('.location-filter'));
       
@@ -74,6 +75,30 @@
       this._processSavedSearch();
       this._updateToggleFilters();
       this._doSearch();
+    },
+    
+    _geocodeAddress: function(e) {
+      const gecodeBtn = $(e.target).closest('.locate-address-btn');
+      
+      gecodeBtn
+        .find('.fa')
+        .removeClass('fa-caret-right')
+        .addClass('fa-spinner fa-spin');
+      
+      const location = $(this.element).find('.geocoder-input').val();
+      if (!location) {
+        return;
+      }
+      
+      $.getJSON(`/ajax/gecode?location=${location}`, (coordinates) => {
+        $(this.element).find('.geocoder-input').val('');
+        this._searchMap.panTo(coordinates);
+        gecodeBtn
+          .find('.fa')
+          .removeClass('fa-spinner fa-spin')
+          .addClass('fa-caret-right');
+      });
+      
     },
     
     _onWindowScroll: function() {

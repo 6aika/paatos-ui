@@ -1,5 +1,5 @@
 /*jshint esversion: 6 */
-/* global __dirname */
+/* global __dirname, Promise */
 
 (() => {
   'use strict';
@@ -103,6 +103,31 @@
         .catch((err) => {
           res.status(500).send(err);
         });
+    }
+    
+    getAjaxGeocode(req, res) {
+      const location = req.query.location;
+      
+      if (!location) {
+        return res.status(400).send();
+      }
+      
+      const geoServiceUrl = `${config.get('geocode:url')}?key=${config.get('geocode:key')}&location=${location}`;
+      request.get({
+        url: geoServiceUrl,
+        json: true
+      }, (err, response, data) => {
+        if (err) {
+          res.status(500).send(err);
+        } else {
+          if (data.results && data.results[0].locations && data.results[0].locations[0]) {
+            const bestLocation = data.results[0].locations[0];
+            res.send(bestLocation.latLng);
+          } else {
+            res.status(404).send();
+          }
+        }
+      });
     }
     
     getRssSearch(req, res) {
@@ -231,6 +256,7 @@
       app.get("/system/ping", this.getSystemPing.bind(this));
       app.get('/action/:apiId/:actionId', this.getSingleAction.bind(this));
       app.post('/ajax/search', this.postAjaxSearch.bind(this));
+      app.get('/ajax/gecode', this.getAjaxGeocode.bind(this));
       app.post('/ajax/search/save', this.postAjaxSearchSave.bind(this));
       app.get('/ajax/action/:apiId/:actionId', this.getAjaxAction.bind(this));
       app.get('/rss/:searchId', this.getRssSearch.bind(this));
