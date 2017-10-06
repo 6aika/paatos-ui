@@ -395,9 +395,11 @@
         }
 
         if (!response.hits.length && $('.search-result-item[data-id]').length === 0) {
+          searchResultsContainer.empty();
           $('.no-results-container').show();
         }
-
+        
+        this._isotope.isotope('layout');
         this._loadingMore = false;
       });
     },
