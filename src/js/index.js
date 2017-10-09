@@ -42,12 +42,12 @@
         layoutMode: 'vertical',
          getSortData: {
           score: '[data-score] parseFloat',
-          title: '[data-title]',
+          date: '[data-date] parseInt',
         },
-        sortBy: [ 'score', 'title' ],
+        sortBy: [ 'score', 'date' ],
         sortAscending: {
           score: false,
-          title: true,
+          date: false
         }
       });
 
@@ -361,13 +361,15 @@
           const rootFunctionId = source.functionId ? source.functionId.split(' ')[0] : '99';
           
           const resultHtml = pugSearchResultItem({
-            title: _.truncate(source.resultText, { length: 100 }),
+            title: _.truncate(source.resultText, { length: 90 }),
             hit: source,
             score: hit._score,
             id: hit._id,
             sourceApi: this._getApiName(source.apiId),
             rootFunctionId: rootFunctionId,
-            caseGeometries: source.caseGeometries && source.caseGeometries.geometries ? source.caseGeometries.geometries : null
+            caseGeometries: source.caseGeometries && source.caseGeometries.geometries ? source.caseGeometries.geometries : null,
+            date: source.eventStart ? moment(source.eventStart).format('D.M.YYYY') : null,
+            dateMillis: source.eventStart ? moment(source.eventStart).valueOf() : 0
           });
         
           _.pull(existingIds, hit._id);

@@ -246,7 +246,7 @@
         }
       };
       
-      return { body: queryBody, from: from, size: size, sort: ['_score', 'resultText'] };
+      return { body: queryBody, from: from, size: size, sort:'_score,eventStart:desc'};
     }
     
     register(app, keycloak) {
