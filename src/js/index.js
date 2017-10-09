@@ -63,6 +63,8 @@
       this.element.on("click", '.get-rss-btn', $.proxy(this._createRssFeed, this));
       this.element.on("click", '.locate-address-btn', $.proxy(this._geocodeAddress, this));
       this.element.on("click", '.empty-date-filter-btn', $.proxy(this._onEmptyDateFilterClick, this));
+      this.element.on("click", '.remove-map-filter-btn', $.proxy(this._onRemoveMapFilterClick, this));
+      
       $(window).scroll($.proxy(this._onWindowScroll, this));
       
       this._createLocationFilterMap(this.element.find('.location-filter'));
@@ -75,6 +77,12 @@
       this._initializeDateRangeFilter();
       this._processSavedSearch();
       this._updateToggleFilters();
+      this._doSearch();
+    },
+    
+    _onRemoveMapFilterClick: function(e) {
+      this._searchMapEditableLayers.clearLayers();
+      this._geoJsonQuery = null;
       this._doSearch();
     },
     
@@ -251,7 +259,20 @@
           remove: false
         }
       });
-        
+      
+      const RemoveFilterControl = L.Control.extend({
+        options: {
+          position: 'topleft' 
+        },
+        onAdd: function (map) {
+          const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-custom remove-map-filter-btn');
+          $(container).append($('<i>').addClass('fa fa-times'));
+          return container;
+        },
+
+      })
+      
+      this._searchMap.addControl(new RemoveFilterControl());
       this._searchMap.addControl(drawControl);
       this._searchMap.on(L.Draw.Event.CREATED, $.proxy(this._onSearchMapDrawEventCreated, this));
       this._searchMap.on(L.Draw.Event.EDITED, $.proxy(this._onSearchMapDrawEventEdited, this));
