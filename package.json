@@ -1,7 +1,7 @@
 {
   "name": "paatos-ui",
   "description": "Web user interface for 6aika paatos-api",
-  "version": "0.0.14",
+  "version": "0.0.15",
   "main": "app.js",
   "author": {
     "name": "Metatavu",
