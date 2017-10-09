@@ -62,6 +62,7 @@
       this.element.on("click", '.copy-to-clipboard-btn', $.proxy(this._copyToClipboard, this));
       this.element.on("click", '.get-rss-btn', $.proxy(this._createRssFeed, this));
       this.element.on("click", '.locate-address-btn', $.proxy(this._geocodeAddress, this));
+      this.element.on("click", '.empty-date-filter-btn', $.proxy(this._onEmptyDateFilterClick, this));
       $(window).scroll($.proxy(this._onWindowScroll, this));
       
       this._createLocationFilterMap(this.element.find('.location-filter'));
@@ -75,6 +76,10 @@
       this._processSavedSearch();
       this._updateToggleFilters();
       this._doSearch();
+    },
+    
+    _onEmptyDateFilterClick: function(e) {
+      $(e.target).parents('.input-group').find('.date-range-filter')[0]._flatpickr.clear();
     },
     
     _geocodeAddress: function(e) {

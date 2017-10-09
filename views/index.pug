@@ -51,14 +51,22 @@ block body
                 | Suodata päivämärään mukaan
               p.date-filter-details Voit suodattaa päätöksiä sekä alku- ja/tai loppupäivämäärän mukaan.
               label Päätökset alkaen:
-              input.date-range-filter.filter-start.form-control(type="text", placeholder="Alkupäivämäärä")
+              .input-group
+                input.date-range-filter.filter-start.form-control(type="text", placeholder="Alkupäivämäärä")
+                span.input-group-btn
+                  button.btn.btn-secondary.empty-date-filter-btn
+                    .fa.fa-times
               br
               label Päätökset ennen:
-              input.date-range-filter.filter-end.form-control(type="text", placeholder="Loppupäivämäärä")
+              .input-group
+                input.date-range-filter.filter-end.form-control(type="text", placeholder="Loppupäivämäärä")
+                span.input-group-btn
+                  button.btn.btn-secondary.empty-date-filter-btn
+                    .fa.fa-times
             .col-md.filter-box
               .location-filter
               .input-group
-                input.form-control.geocoder-input(type="text", placeholder="Hae osoitteella")
+                input.form-control.geocoder-input(type="text", placeholder="Keskitä kartta osoitteeseen")
                 span.input-group-btn
                   button.btn.btn-info.locate-address-btn
                     i.fa.fa-caret-right
