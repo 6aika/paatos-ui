@@ -52,6 +52,7 @@
       });
 
       this.element.on("keyup", '.freetext-search', $.proxy(this._onFreeTextSearchKeyUp, this));
+      this.element.on("keyup", '.geocoder-input', $.proxy(this._onGeoCoderInputKeyUp, this));
       this.element.on("change", '.filter input[type="checkbox"]', $.proxy(this._onToggleFilterChange, this));
       this.element.on("click", '.search-result-item-title-container', $.proxy(this._onSearchResultItemTitleContainerClick, this));
       this.element.on("click", '.search-result-icon-container', $.proxy(this._onSearchResultItemIconContainerClick, this));
@@ -61,7 +62,7 @@
       this.element.on("click", '.save-search-btn', $.proxy(this._saveSearch, this));
       this.element.on("click", '.copy-to-clipboard-btn', $.proxy(this._copyToClipboard, this));
       this.element.on("click", '.get-rss-btn', $.proxy(this._createRssFeed, this));
-      this.element.on("click", '.locate-address-btn', $.proxy(this._geocodeAddress, this));
+      this.element.on("click", '.locate-address-btn', $.proxy(this._onLocateAddressClick, this));
       this.element.on("click", '.empty-date-filter-btn', $.proxy(this._onEmptyDateFilterClick, this));
       this.element.on("click", '.remove-map-filter-btn', $.proxy(this._onRemoveMapFilterClick, this));
       
@@ -89,19 +90,43 @@
     _onEmptyDateFilterClick: function(e) {
       $(e.target).parents('.input-group').find('.date-range-filter')[0]._flatpickr.clear();
     },
-    
-    _geocodeAddress: function(e) {
-      const gecodeBtn = $(e.target).closest('.locate-address-btn');
+
+    _clearGeoCodeTimeout: function() {
+      if (this.geocodeTimeout) {
+        clearTimeout(this.geocodeTimeout);
+      }
+      this.geocodeTimeout = null;   
+    },
+
+    _onGeoCoderInputKeyUp: function(e) {
+      const keyCode = e.keyCode || e.which;
+      if (keyCode === 13) {
+        return this._geocodeAddress();
+      }
       
-      gecodeBtn
-        .find('.fa')
-        .removeClass('fa-caret-right')
-        .addClass('fa-spinner fa-spin');
+      this._clearGeoCodeTimeout();
+      this.geocodeTimeout = setTimeout(() => {
+        this._geocodeAddress();
+      }, 2000);
+    },
+    
+    _onLocateAddressClick: function(e) {
+      this._geocodeAddress();
+    },
+    
+    _geocodeAddress: function() {
+      this._clearGeoCodeTimeout();
+      const gecodeBtn = $(this.element).find('.locate-address-btn');
       
       const location = $(this.element).find('.geocoder-input').val();
       if (!location) {
         return;
       }
+      
+      gecodeBtn
+        .find('.fa')
+        .removeClass('fa-caret-right')
+        .addClass('fa-spinner fa-spin');
       
       $.getJSON(`/ajax/gecode?location=${location}`, (coordinates) => {
         $(this.element).find('.geocoder-input').val('');
