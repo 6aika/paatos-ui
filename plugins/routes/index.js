@@ -48,6 +48,10 @@
         });
     }
     
+    getAbout(req, res) {
+      res.render('about');
+    }
+    
     getSystemPing(req, res) {
       res.send("PONG");
     }
@@ -255,6 +259,7 @@
       // Navigation     
       
       app.get("/", this.getIndex.bind(this));
+      app.get("/about", this.getAbout.bind(this));
       app.get("/system/ping", this.getSystemPing.bind(this));
       app.get('/action/:apiId/:actionId', this.getSingleAction.bind(this));
       app.post('/ajax/search', this.postAjaxSearch.bind(this));

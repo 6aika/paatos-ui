@@ -1,0 +1,33 @@
+extends layout/layout
+
+block custom-head
+  title Päätöshaku
+block body
+  .content
+    .container
+      .row
+        .col
+          a(href="/")
+            |<-- Takaisin hakuun
+      .row
+        .col
+          h3 Päätöshaku
+      .row
+        .col-8
+          p Päätöshaku on esimerkkikäyttöliittymä, joka käyttää 6Aika-päätösrajapintoja. Rajapinnoista suurin osa on vielä testiversioita. Demoversion tarkoitus on havainnollistaa, miten päätösrajapintoja voisi käyttää.
+          p Tällä hetkellä Päätöshaussa on päätösdataa Oulusta, Tampereelta, Vantaalta, Espoosta ja Helsingistä. Päätöshaku ei käytä kaupunkien REST-tyyppisiä päätösrajapintoja suoraan, vaan se hakee tiedot omaan välimuistiinsa hakujen nopeuttamiseksi ja parantamiseksi.
+      .row
+        .col
+          h3 Huomioita testiversioiden päätösdataan
+      .row
+        .col-8
+          p Data päivittyy Päätöshakuun testivaiheessa epäsäännöllisesti. 
+          p Karttahaku toimii toistaiseksi ainoastaan Helsingissä, koska muiden kaupunkien metatietoja ei tällä hetkellä rikasteta paikkatiedolla. Asianhallintajärjestelmät eivät yleisesti sisällä asioihin liittyviä paikkatietoja, mutta esimerkiksi kaavanumeroa vastaava geometria on helposti haettavissa kaavarekisteristä tai vastaavasta tietokannasta ja katuosoitteet voidaan geokoodata koordinaateiksi. 
+      .row
+        .col
+          h3 Bugit ja kehitysehdotukset
+      .row
+        .col-8
+          p 
+           |Kaikki kehitysehdotukset ovat tervetulleita! Jos huomaat Päätöshaussa virheellisiä toimintoja ja kehitettävää, tee jokaisesta oma issue projektin 
+           a(href='https://github.com/6aika/paatos-ui', target='_blank') GitHubiin.
