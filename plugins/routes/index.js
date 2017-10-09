@@ -106,11 +106,13 @@
     }
     
     getAjaxGeocode(req, res) {
-      const location = req.query.location;
+      let location = req.query.location;
       
       if (!location) {
         return res.status(400).send();
       }
+      
+      location = location.toLowerCase().replace(/ä/g, 'a').replace(/ö/g, 'o');
       
       const geoServiceUrl = `${config.get('geocode:url')}?key=${config.get('geocode:key')}&location=${location}`;
       request.get({
