@@ -108,10 +108,15 @@ create file named config.json with following content
 }
 ```
 "apis": used to configure which paatos-api instances are used for searching the data.
+
 "geocode": connection details to geocoding API.
+
 "session-secret": random string here.
+
 "mysql": database connection details.
+
 "elasticsearch": elastisearch connection details.
+
 "tasks": used to configure how many actions will be indexed simultaneously and how long the system will wait before starting the next indexing batch.
 
 ### Running
