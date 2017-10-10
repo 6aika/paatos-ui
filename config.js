@@ -1,10 +1,6 @@
 const config = require('nconf');
 
-module.exports = [
-  {
-    "packagePath": "shady-messages",
-    "amqpUrl": config.get('amqp:url')
-  },
+const architectConfig = [
   {
     "packagePath": "shady-sequelize",
     "host": config.get('mysql:host'),
@@ -23,10 +19,18 @@ module.exports = [
       }
     }
   },
-   "shady-worker",
   "./plugins/models",
   "./plugins/routes",
   "./plugins/tasks",
   "./plugins/apiclient",
   "./plugins/search"
 ];
+
+if (!config.get('standalone')) {
+  architectConfig.unshift({
+    "packagePath": "shady-messages",
+    "amqpUrl": config.get('amqp:url')
+  }, "shady-worker");
+}
+
+module.exports = architectConfig;

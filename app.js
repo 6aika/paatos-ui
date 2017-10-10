@@ -12,10 +12,7 @@
   const request = require('request');
   const config = require('nconf');
   const i18n = require('i18n-x');
-  const Keycloak = require('keycloak-connect');  
-  const session = require('express-session');
   const bodyParser = require('body-parser');
-  const SequelizeStore = require('connect-session-sequelize')(session.Store);
   
   config.file({file: __dirname + '/config.json'});
    
@@ -41,44 +38,25 @@
     
     const sequelize = architectApp.getService('shady-sequelize').sequelize;
     const Sequelize = architectApp.getService('shady-sequelize').Sequelize;
-    const shadyWorker = architectApp.getService('shady-worker');
     const models = architectApp.getService('paatos-ui-models');
     const routes = architectApp.getService('paatos-ui-routes');
     const logger = architectApp.getService('logger');
     
     const port = options.getOption('port');
     const host = options.getOption('host');
-    const serverGroup = config.get("server-group");
 
-    const workerId = shadyWorker.start(serverGroup, port, host);
+    if (!config.get('standalone')) {
+      const shadyWorker = architectApp.getService('shady-worker');
+      const serverGroup = config.get("server-group");
+      const workerId = shadyWorker.start(serverGroup, port, host);
+    }
+
     const app = express();
     const httpServer = http.createServer(app);
-
-    const sessionStore = new SequelizeStore({
-      db: sequelize,
-      table: "ConnectSession"
-    });
-    
-    sessionStore.sync();
-    
-    const keycloak = new Keycloak({ store: sessionStore }, {
-      "realm": config.get('keycloak:realm'),
-      "auth-server-url": config.get('keycloak:auth-server-url'),
-      "ssl-required": config.get('keycloak:ssl-required'),
-      "resource": config.get('keycloak:resource'),
-      "public-client": config.get('keycloak:public-client')
-    });
     
     httpServer.listen(port, () => {
       logger.info('Http server started');
     });
-    
-    app.use(session({
-      store: sessionStore,
-      resave: false,
-      saveUninitialized: true,
-      secret: config.get('session-secret')
-    }));
     
     app.use(bodyParser.json());
     app.use(bodyParser.urlencoded({
@@ -88,18 +66,6 @@
     app.use(i18n({
       locales: ['fi', 'en']
     }));
-    
-    app.use(keycloak.middleware({
-      logout: '/logout'
-    }));
-    
-    app.use((req, res, next) => {
-      req.paatosUiCommon = {
-        isLoggedIn: req.kauth && req.kauth.grant
-      };
-      
-      next();
-    });
     
     app.use((req, res, next) => {
       res.header("Access-Control-Allow-Origin", "*");
@@ -111,7 +77,7 @@
     app.set('views', path.join(__dirname, 'views'));
     app.set('view engine', 'pug');
     
-    routes.register(app, keycloak);
+    routes.register(app);
   });
 
 })();

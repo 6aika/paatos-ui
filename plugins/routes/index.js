@@ -255,7 +255,7 @@
       return { body: queryBody, from: from, size: size, sort:'_score,eventStart:desc'};
     }
     
-    register(app, keycloak) {
+    register(app) {
       // Navigation     
       
       app.get("/", this.getIndex.bind(this));
