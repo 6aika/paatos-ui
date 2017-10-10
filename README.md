@@ -104,7 +104,8 @@ create file named config.json with following content
   "tasks": {
     "concurrent": 4,
     "afterProcessDelay": 1000
-  }
+  },
+  "standalone": true
 }
 ```
 "apis": used to configure which paatos-api instances are used for searching the data.
@@ -118,6 +119,8 @@ create file named config.json with following content
 "elasticsearch": elastisearch connection details.
 
 "tasks": used to configure how many actions will be indexed simultaneously and how long the system will wait before starting the next indexing batch.
+
+"standalone": run system in non-clustered mode
 
 ### Running
 Start the Paatos-ui by running command
