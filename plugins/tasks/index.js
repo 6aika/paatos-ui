@@ -9,12 +9,13 @@
   const Queue = require('better-queue');
   const config = require('nconf');
   const ApiUtils = require(__dirname + '/../../utils/apiutils.js');
+  const SQLStore = require('better-queue-sql');
   
   class Tasks {
     
     constructor (logger, apiClient, search) {
       this.pageSize = 20;
-      this.queueFeedSpeed = 200;
+      this.queueFeedSpeed = 50;
       
       this.logger = logger;
       this.apiClient = apiClient;
@@ -22,28 +23,47 @@
   
       this.search.on('indexReady', this.onSearchReady.bind(this));
       
-      this.actionQueue = new Queue(this.indexAction.bind(this), { 
+      this.taskStore = new SQLStore({
+        dialect: 'mysql',
+        tableName: config.get('tasks:tableName'),
+        dbname: config.get('mysql:database'),
+        host: config.get('mysql:host') || 'localhost',
+        port: config.get('mysql:port') || 3306,
+        user: config.get('mysql:username'),
+        password: config.get('mysql:password')
+      });
+      
+      this.actionQueue = new Queue(this.indexAction.bind(this), {
         autoResume: false,
         concurrent: config.get('tasks:concurrent'), 
         afterProcessDelay: config.get('tasks:afterProcessDelay'), 
+        maxTimeout: 20000,
         priority: (task, callback) => {
           callback(null, -task.priority);
         }
       });
-      
+
+      this.actionQueue.use(this.taskStore);
       this.actionQueue.on('drain', this.onCaseInderersDrain.bind(this));
-      
-      if (!this.actionQueue.count) {
-        this.queueCaseIndexTasks();
-      }
-      
+
     }
     
     onSearchReady() {
-      this.actionQueue.resume();
+      this.taskStore.getRunningTasks((err, tasks) => {
+        if (!tasks || !Object.keys(tasks).length) {
+          this.queueCaseIndexTasks();
+        }
+
+        this.actionQueue.resume();
+      });
+      
+
     }
     
     indexAction(data, callback) {
+      if (config.get('tasks:log:debug')) {
+        console.log(`Indexing action with id ${data.id}`);
+      }
       this.loadActionDatas(data.apiId, data.page * this.pageSize, this.pageSize)
         .then((result) => {
           return this.search.indexActions(data.apiId, result);
@@ -177,6 +197,9 @@
     queueCaseIndexTasksPage(taskData) {
       return new Promise((resolve) => {
         setTimeout(() => {
+          if (config.get('tasks:log:debug')) {
+            console.log(`Added task ${taskData.id} to queue`);
+          }
           this.actionQueue.push(taskData);
           resolve();
         }, this.queueFeedSpeed);
