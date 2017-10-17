@@ -191,7 +191,8 @@
       const eventWithinEnd = body.eventWithinEnd;
       const must = [];
       const filter = {};
-      
+      let sort = '_score,eventStart:desc';
+
       must.push({
         "terms" : {
           "apiId" : apiIds 
@@ -204,6 +205,8 @@
             "contentTexts" : freeText
           }
         });
+      } else {
+        sort = 'eventStart:desc';
       }
       
       if (geoJson) {
@@ -252,7 +255,7 @@
         }
       };
       
-      return { body: queryBody, from: from, size: size, sort:'_score,eventStart:desc'};
+      return { body: queryBody, from: from, size: size, sort: sort};
     }
     
     register(app) {
