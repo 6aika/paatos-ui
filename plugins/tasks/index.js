@@ -29,7 +29,7 @@
         dbname: config.get('mysql:database'),
         host: config.get('mysql:host') || 'localhost',
         port: config.get('mysql:port') || 3306,
-        user: config.get('mysql:username'),
+        username: config.get('mysql:username'),
         password: config.get('mysql:password')
       });
       
