@@ -58,6 +58,10 @@
       logger.info('Http server started');
     });
     
+    if (config.get('google-analytics')) {
+      app.locals.googleAnalytics = config.get('google-analytics');
+    }
+    
     app.use(bodyParser.json());
     app.use(bodyParser.urlencoded({
       extended : true

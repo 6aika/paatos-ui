@@ -18,6 +18,13 @@ html(lang='en')
     link(rel='stylesheet', href='//cdn.metatavu.io/libs/font-awesome/4.7.0/css/font-awesome.min.css')
     link(rel='stylesheet', href='/css/layout.min.css')
     block custom-head
+    if googleAnalytics
+      script(async='', src='https://www.googletagmanager.com/gtag/js?id='+googleAnalytics)
+      script.
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', '#{googleAnalytics}');
   body
     button.btn.btn-info.scroll-up-btn
       i.fa.fa-caret-up
