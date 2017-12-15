@@ -16,6 +16,7 @@
     constructor (logger) {
       super();
       
+      this.indexReady = false;
       this.logger = logger;
       this.index = config.get('elasticsearch:index');
       
@@ -29,11 +30,16 @@
           return this.updateMappings();
         })
         .then(() => {
+          this.indexReady = true;
           this.emit("indexReady");
         })
         .catch((e) => {
           this.logger.error('Failed to prepare index', e);
         });
+    }
+    
+    getIndexReady() {
+      return this.indexReady;
     }
     
     indexActions(apiId, actionsData) {

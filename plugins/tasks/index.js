@@ -21,8 +21,6 @@
       this.apiClient = apiClient;
       this.search = search;
   
-      this.search.on('indexReady', this.onSearchReady.bind(this));
-      
       this.taskStore = new SQLStore({
         dialect: 'mysql',
         tableName: config.get('tasks:tableName'),
@@ -46,9 +44,19 @@
       this.actionQueue.use(this.taskStore);
       this.actionQueue.on('drain', this.onCaseInderersDrain.bind(this));
 
+      if (this.search.getIndexReady()) {
+        this.startTasks();
+      } else {
+        this.search.on('indexReady', this.onSearchReady.bind(this));
+      }
+      
     }
     
     onSearchReady() {
+      this.startTasks();
+    }
+    
+    startTasks() {
       this.taskStore.getRunningTasks((err, tasks) => {
         if (!tasks || !Object.keys(tasks).length) {
           this.queueCaseIndexTasks();
@@ -56,8 +64,6 @@
 
         this.actionQueue.resume();
       });
-      
-
     }
     
     indexAction(data, callback) {
